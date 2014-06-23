@@ -264,10 +264,22 @@ int GLX_Init(glimpParms_t a)
 	common->Printf("Initializing OpenGL display\n");
 
 	root = RootWindow(dpy, scrnum);
+    
+	glConfig.isFullscreen = a.fullScreen;
 
-	actualWidth = glConfig.vidWidth;
-	actualHeight = glConfig.vidHeight;
-
+	common->Printf("DoomConfig value's are = width:%d height:%d fullScreen:%d stereo:%d displayHz:%d multiSamples:%d\n" , a.width, a.height, a.fullScreen, a.stereo, a.displayHz, a.multiSamples);
+	
+	if (glConfig.isFullscreen)
+	{
+		int screen_num = DefaultScreen(dpy);
+		actualWidth = glConfig.vidWidth = DisplayWidth(dpy, screen_num);
+		actualHeight = glConfig.vidHeight = DisplayHeight(dpy, screen_num);
+	}
+	else
+	{
+		actualWidth = glConfig.vidWidth;
+		actualHeight = glConfig.vidHeight;
+	}	
 	// color, depth and stencil
 	colorbits = 24;
 	depthbits = 24;
@@ -433,11 +445,24 @@ int GLX_Init(glimpParms_t a)
 	common->Printf("GL_EXTENSIONS: %s\n", glstring);
 
 	// FIXME: here, software GL test
-
-	glConfig.isFullscreen = a.fullScreen;
-
+	
 	if (glConfig.isFullscreen) {
 		Sys_GrabMouseCursor(true);
+
+		XEvent xev;
+		Atom wm_state = XInternAtom(dpy, "_NET_WM_STATE", False);
+		Atom fullscreen = XInternAtom(dpy, "_NET_WM_STATE_FULLSCREEN", False);
+		memset(&xev, 0, sizeof(xev));
+		xev.type = ClientMessage;
+		xev.xclient.window = win;
+		xev.xclient.message_type = wm_state;
+		xev.xclient.format = 32;
+		xev.xclient.data.l[0] = 1;
+		xev.xclient.data.l[1] = fullscreen;
+		xev.xclient.data.l[2] = 0;
+		XMapWindow(dpy, win);
+		XSendEvent(dpy, DefaultRootWindow(dpy), False, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
+		XFlush(dpy);		
 	}
 
 	return true;

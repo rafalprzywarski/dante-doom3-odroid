@@ -352,7 +352,7 @@ else:
 if ( local_dedicated == 0 ):
 	if g_os == 'Linux':
 		local_env.Append( LIBS = [ 'X11' ] )
-		local_env.Append( LIBPATH = [ '/usr/X11R6/lib' ] )
+		local_env.Append( LIBPATH = [ '/usr/lib' ] )
 		local_env.Append( LIBS = [ 'openal' ] )
 	if ( local_opengl == 0 ):
 		local_env.Append( LIBS = [ 'GLESv2', 'EGL' ] )
@@ -381,6 +381,6 @@ if ( local_gamedll == 0 ):
 if g_os == 'Android':
 	d3wm = local_env.SharedLibrary( target = 'dante', source = source_list )
 else:
-	d3wm = local_env.Program( target = 'dante', source = source_list )
+	d3wm = local_env.Program( target = 'doom3', source = source_list )
 
 Return( 'd3wm' )

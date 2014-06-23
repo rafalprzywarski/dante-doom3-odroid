@@ -38,6 +38,9 @@ extern glconfig_t glConfig;
 #include <X11/extensions/xf86dga.h>
 #endif
 #include <X11/XKBlib.h>
+#include <X11/Xlib.h>
+#include <X11/Xatom.h>
+#include <X11/Xutil.h>
 
 extern Display *dpy;
 extern Window win;

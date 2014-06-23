@@ -397,7 +397,7 @@ double Sys_ClockTicksPerSecond(void)
 		return ret;
 	}
 
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || defined(__ODROID__)
 	fd = open("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq", O_RDONLY);
 #else
 	fd = open("/proc/cpuinfo", O_RDONLY);
@@ -414,7 +414,7 @@ double Sys_ClockTicksPerSecond(void)
 	len = read(fd, buf, 4096);
 	close(fd);
 
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || defined(__ODROID__)
 	if (len > 0) {
 		ret = atof(buf);
 		common->Printf("/proc/cpuinfo CPU frequency: %g MHz", ret / 1000.0);
