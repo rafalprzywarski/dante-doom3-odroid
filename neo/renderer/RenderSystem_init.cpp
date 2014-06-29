@@ -1638,38 +1638,7 @@ R_SetColorMappings
 */
 void R_SetColorMappings(void)
 {
-	int		i, j;
-	float	g, b;
-	int		inf;
-
-	b = r_brightness.GetFloat();
-	g = r_gamma.GetFloat();
-
-	for (i = 0; i < 256; i++) {
-		j = i * b;
-
-		if (j > 255) {
-			j = 255;
-		}
-
-		if (g == 1) {
-			inf = (j<<8) | j;
-		} else {
-			inf = 0xffff * pow(j/255.0f, 1.0f / g) + 0.5f;
-		}
-
-		if (inf < 0) {
-			inf = 0;
-		}
-
-		if (inf > 0xffff) {
-			inf = 0xffff;
-		}
-
-		tr.gammaTable[i] = inf;
-	}
-
-	GLimp_SetGamma(tr.gammaTable, tr.gammaTable, tr.gammaTable);
+	GLimp_SetGamma(r_brightness.GetFloat(), r_gamma.GetFloat());
 }
 
 

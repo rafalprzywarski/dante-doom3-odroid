@@ -66,6 +66,8 @@ void	RB_GLSL_DrawInteraction(const drawInteraction_t *din)
 	static const float zero[4] = { 0, 0, 0, 0 };
 	static const float one[4] = { 1, 1, 1, 1 };
 	static const float negOne[4] = { -1, -1, -1, -1 };
+	
+	shaderProgram_t *shader = &interactionShader;	
 
 	// load all the vertex program parameters
 	GL_UniformMatrix4fv(offsetof(shaderProgram_t, textureMatrix), mat4_identity.ToFloatPtr());
@@ -121,7 +123,8 @@ void	RB_GLSL_DrawInteraction(const drawInteraction_t *din)
 			break;
 	}
 	GL_Uniform1fv(offsetof(shaderProgram_t, specularExponent), &f);
-
+	glUniform1f(glGetUniformLocation(shader->program, "u_brightness"), glConfig.valBrightness);
+	
 	// set the textures
 
 	// texture 0 will be the per-surface bump map
@@ -491,6 +494,8 @@ static void RB_GLSL_GetUniformLocations(shaderProgram_t *shader)
 	shader->attr_Normal = glGetAttribLocation(shader->program, "attr_Normal");
 	shader->attr_Vertex = glGetAttribLocation(shader->program, "attr_Vertex");
 	shader->attr_Color = glGetAttribLocation(shader->program, "attr_Color");
+	
+	shader->gamma = glGetUniformLocation(shader->program, "u_gamma");	
 
 	for (i = 0; i < MAX_VERTEX_PARMS; i++) {
 		idStr::snPrintf(buffer, sizeof(buffer), "u_vertexParm%d", i);
@@ -502,6 +507,8 @@ static void RB_GLSL_GetUniformLocations(shaderProgram_t *shader)
 		shader->u_fragmentMap[i] = glGetUniformLocation(shader->program, buffer);
 		glUniform1i(shader->u_fragmentMap[i], i);
 	}
+	
+	glUniform1f(shader->gamma, r_gamma.GetFloat());
 
 	GL_CheckErrors();
 

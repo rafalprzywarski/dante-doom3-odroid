@@ -85,6 +85,9 @@ typedef struct glconfig_s {
 	bool				allowGLSLPath;
 
 	bool				isInitialized;
+	
+	float				valGamma;
+	float				valBrightness;	
 } glconfig_t;
 
 
