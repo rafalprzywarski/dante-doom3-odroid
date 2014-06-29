@@ -83,7 +83,7 @@ idCVar com_logFile("logFile", "0", CVAR_SYSTEM | CVAR_NOCHEAT, "1 = buffer log, 
 idCVar com_logFileName("logFileName", "qconsole.log", CVAR_SYSTEM | CVAR_NOCHEAT, "name of log file, if empty, qconsole.log will be used");
 idCVar com_makingBuild("com_makingBuild", "0", CVAR_BOOL | CVAR_SYSTEM, "1 when making a build");
 idCVar com_updateLoadSize("com_updateLoadSize", "0", CVAR_BOOL | CVAR_SYSTEM | CVAR_NOCHEAT, "update the load size after loading a map");
-idCVar com_videoRam("com_videoRam", "64", CVAR_INTEGER | CVAR_SYSTEM | CVAR_NOCHEAT | CVAR_ARCHIVE, "holds the last amount of detected video ram");
+idCVar com_videoRam("com_videoRam", "512", CVAR_INTEGER | CVAR_SYSTEM | CVAR_NOCHEAT | CVAR_ARCHIVE, "holds the last amount of detected video ram");
 
 idCVar com_product_lang_ext("com_product_lang_ext", "1", CVAR_INTEGER | CVAR_SYSTEM | CVAR_ARCHIVE, "Extension to use when creating language files.");
 
