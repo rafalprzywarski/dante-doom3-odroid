@@ -56,7 +56,7 @@ if [ ! -d $GAME_DATA/base/gl2progs ]; then
 	echo "Install shaders in ~/.doom3/base/gl2progs"
 	git clone --quiet --depth 1 $SHADER_URL
 else
-    cd $GAME_DATA/base/gl2progs
+	cd $GAME_DATA/base/gl2progs
 	git pull
 fi
 
