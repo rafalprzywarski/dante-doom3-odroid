@@ -431,7 +431,7 @@ int GLX_Init(glimpParms_t a)
 	eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext);
 
 	if (cvarSystem->GetCVarInteger("r_swapInterval") > -1) {
-		if (eglSwapInterval(eglDisplay, 0) != EGL_TRUE) {
+		if (eglSwapInterval(eglDisplay, cvarSystem->GetCVarInteger("r_swapInterval")) != EGL_TRUE) {
 			common->Printf("Couldn't set EGL swap interval\n");
 			return false;
 		}
