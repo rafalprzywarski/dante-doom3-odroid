@@ -391,7 +391,6 @@ static bool R_LinkGLSLShader(shaderProgram_t *shaderProgram, bool needsAttribute
 {
 	char buf[BUFSIZ];
 	int len;
-	GLint status;
 	GLint linked;
 
 	shaderProgram->program = glCreateProgram();
@@ -495,8 +494,6 @@ static void RB_GLSL_GetUniformLocations(shaderProgram_t *shader)
 	shader->attr_Vertex = glGetAttribLocation(shader->program, "attr_Vertex");
 	shader->attr_Color = glGetAttribLocation(shader->program, "attr_Color");
 	
-	shader->gamma = glGetUniformLocation(shader->program, "u_gamma");	
-
 	for (i = 0; i < MAX_VERTEX_PARMS; i++) {
 		idStr::snPrintf(buffer, sizeof(buffer), "u_vertexParm%d", i);
 		shader->u_vertexParm[i] = glGetAttribLocation(shader->program, buffer);
@@ -508,7 +505,7 @@ static void RB_GLSL_GetUniformLocations(shaderProgram_t *shader)
 		glUniform1i(shader->u_fragmentMap[i], i);
 	}
 	
-	glUniform1f(shader->gamma, r_gamma.GetFloat());
+	glUniform1f(glGetUniformLocation(shader->program, "u_gamma"), r_gamma.GetFloat());
 
 	GL_CheckErrors();
 
@@ -572,8 +569,6 @@ R_ReloadGLSLPrograms_f
 */
 void R_ReloadGLSLPrograms_f(const idCmdArgs &args)
 {
-	int		i;
-
 	common->Printf("----- R_ReloadGLSLPrograms -----\n");
 
 	if (!RB_GLSL_InitShaders()) {

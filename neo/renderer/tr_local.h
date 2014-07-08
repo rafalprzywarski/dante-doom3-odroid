@@ -1423,8 +1423,6 @@ typedef struct shaderProgram_s {
 
 	GLint		u_fragmentMap[MAX_FRAGMENT_IMAGES];
 	GLint		u_vertexParm[MAX_VERTEX_PARMS];
-	
-	GLfloat		gamma;	
 } shaderProgram_t;
 
 
