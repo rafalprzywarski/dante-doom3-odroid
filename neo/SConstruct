@@ -150,6 +150,7 @@ if ARGUMENTS.has_key( 'ARCH' ):
 
 # default settings -------------------------------
 g_os = 'Linux'
+g_decoder = 'internal'
 CC = 'gcc'
 CXX = 'g++'
 JOBS = '1'
