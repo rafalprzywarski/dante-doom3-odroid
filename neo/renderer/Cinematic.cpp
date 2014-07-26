@@ -203,79 +203,79 @@ class idCinematicLocal : public idCinematic
 
 	private:
 #if defined(USE_FFMPEG)
-		int						video_stream_index;
-		AVFormatContext*		fmt_ctx;
-		AVFrame*				frame;
-		AVFrame*				frame2;
-		AVCodec*				dec;
-		AVCodecContext*			dec_ctx;
-		SwsContext*				img_convert_ctx;
-		bool					hasFrame;
-		long					framePos;
+		int                     video_stream_index;
+		AVFormatContext*        fmt_ctx;
+		AVFrame*                frame;
+		AVFrame*                frame2;
+		AVCodec*                dec;
+		AVCodecContext*         dec_ctx;
+		SwsContext*             img_convert_ctx;
+		bool                    hasFrame;
+		long                    framePos;
 	
-		cinData_t				ImageForTimeFFMPEG( int milliseconds );
-		bool					InitFromFFMPEGFile( const char* qpath, bool looping );
-		void					FFMPEGReset();
+		cinData_t               ImageForTimeFFMPEG( int milliseconds );
+		bool                    InitFromFFMPEGFile( const char* qpath, bool looping );
+		void                    FFMPEGReset();
 #endif
-		intptr_t				mcomp[256];
-		cinStatus_t				status;
-		byte					**qStatus[2];
-		idStr					fileName;
-		int						CIN_WIDTH, CIN_HEIGHT;
-		idFile					*iFile;
+		intptr_t                mcomp[256];
+		cinStatus_t             status;
+		byte                    **qStatus[2];
+		idStr                   fileName;
+		int                     CIN_WIDTH, CIN_HEIGHT;
+		idFile                  *iFile;
 		//cinStatus_t				status;
-		int						tfps;
-		int						RoQPlayed;
-		int						ROQSize;
-		unsigned int			RoQFrameSize;
-		int						onQuad;
-		int						numQuads;
-		int						samplesPerLine;
-		unsigned int			roq_id;
-		int						screenDelta;
-		byte 					*buf;
-		int						samplesPerPixel;				// defaults to 2
-		unsigned int			xsize, ysize, maxsize, minsize;
-		int						normalBuffer0;
-		int						roq_flags;
-		int						roqF0;
-		int						roqF1;
-		int						t[2];
-		int						roqFPS;
-		int						drawX, drawY;
+		int                     tfps;
+		int                     RoQPlayed;
+		int                     ROQSize;
+		unsigned int            RoQFrameSize;
+		int                     onQuad;
+		int                     numQuads;
+		int                     samplesPerLine;
+		unsigned int            roq_id;
+		int                     screenDelta;
+		byte                    *buf;
+		int                     samplesPerPixel;				// defaults to 2
+		unsigned int            xsize, ysize, maxsize, minsize;
+		int                     normalBuffer0;
+		int                     roq_flags;
+		int                     roqF0;
+		int                     roqF1;
+		int                     t[2];
+		int                     roqFPS;
+		int                     drawX, drawY;
 
-		int						animationLength;
-		int						startTime;
-		float					frameRate;
+		int                     animationLength;
+		int                     startTime;
+		float                   frameRate;
 
-		byte 					*image;
+		byte                    *image;
 
-		bool					looping;
-		bool					dirty;
-		bool					half;
-		bool					smootheddouble;
-		bool					inMemory;
+		bool                    looping;
+		bool                    dirty;
+		bool                    half;
+		bool                    smootheddouble;
+		bool                    inMemory;
 
-		void					RoQ_init(void);
-		void					blitVQQuad32fs(byte **status, unsigned char *data);
-		void					RoQShutdown(void);
-		void					RoQInterrupt(void);
+		void                    RoQ_init(void);
+		void                    blitVQQuad32fs(byte **status, unsigned char *data);
+		void                    RoQShutdown(void);
+		void                    RoQInterrupt(void);
 
-		void					move8_32(byte *src, byte *dst, int spl);
-		void					move4_32(byte *src, byte *dst, int spl);
-		void					blit8_32(byte *src, byte *dst, int spl);
-		void					blit4_32(byte *src, byte *dst, int spl);
-		void					blit2_32(byte *src, byte *dst, int spl);
+		void                    move8_32(byte *src, byte *dst, int spl);
+		void                    move4_32(byte *src, byte *dst, int spl);
+		void                    blit8_32(byte *src, byte *dst, int spl);
+		void                    blit4_32(byte *src, byte *dst, int spl);
+		void                    blit2_32(byte *src, byte *dst, int spl);
 
-		unsigned short			yuv_to_rgb(int y, int u, int v);
-		unsigned int			yuv_to_rgb24(int y, int u, int v);
+		unsigned short          yuv_to_rgb(int y, int u, int v);
+		unsigned int            yuv_to_rgb24(int y, int u, int v);
 
-		void					decodeCodeBook(byte *input, unsigned short roq_flags);
-		void					recurseQuad(int startX, int startY, int quadSize, int xOff, int yOff);
-		void					setupQuad(int xOff, int yOff);
-		void					readQuadInfo(byte *qData);
-		void					RoQPrepMcomp(int xoff, int yoff);
-		void					RoQReset();
+		void                    decodeCodeBook(byte *input, unsigned short roq_flags);
+		void                    recurseQuad(int startX, int startY, int quadSize, int xOff, int yOff);
+		void                    setupQuad(int xOff, int yOff);
+		void                    readQuadInfo(byte *qData);
+		void                    RoQPrepMcomp(int xoff, int yoff);
+		void                    RoQReset();
 };
 
 const int DEFAULT_CIN_WIDTH		= 512;
