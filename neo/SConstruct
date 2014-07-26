@@ -365,8 +365,6 @@ local_idlibpic = 0
 local_d3xp = 0
 # OpenGL
 local_opengl = 0
-# Video decoder to use
-g_decoder = 'internal'
 
 GLOBALS = 'g_env g_env_noopt g_game_env g_os g_decoder ID_MCHECK ALSA idlib_objects game_objects local_dedicated local_gamedll local_demo local_idlibpic local_curl local_d3xp local_opengl OPTCPPFLAGS NDK'
 
