@@ -495,6 +495,7 @@ idCinematicLocal::~idCinematicLocal()
 #endif
 }
 
+#if defined(USE_FFMPEG)
 struct buffer_data 
 {
 	uint8_t *_ptr;
@@ -519,7 +520,7 @@ static int read_packed( void *opaque, uint8_t *buf, int buf_size )
 
     return buf_size;
 }
-
+#endif
 /*
 ==============
 idCinematicLocal::InitFromFFMPEGFile
