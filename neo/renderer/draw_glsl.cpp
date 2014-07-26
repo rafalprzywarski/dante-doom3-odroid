@@ -504,8 +504,6 @@ static void RB_GLSL_GetUniformLocations(shaderProgram_t *shader)
 		shader->u_fragmentMap[i] = glGetUniformLocation(shader->program, buffer);
 		glUniform1i(shader->u_fragmentMap[i], i);
 	}
-	
-	glUniform1f(glGetUniformLocation(shader->program, "u_gamma"), r_gamma.GetFloat());
 
 	GL_CheckErrors();
 
