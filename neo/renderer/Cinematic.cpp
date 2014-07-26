@@ -648,7 +648,9 @@ bool idCinematicLocal::InitFromFFMPEGFile( const char* qpath, bool amilooping )
 	{
 		sws_freeContext( img_convert_ctx );
 	}
+#if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(52,91,100)
 	dec_ctx->pix_fmt = AV_PIX_FMT_YUV444P; // just use this format
+#endif
 	img_convert_ctx = sws_getContext( dec_ctx->width, dec_ctx->height, dec_ctx->pix_fmt, dec_ctx->width, dec_ctx->height, PIX_FMT_BGR32, SWS_BICUBIC, NULL, NULL, NULL );
 	
 	startTime = 0;
