@@ -358,6 +358,8 @@ if ( local_dedicated == 0 ):
 		local_env.Append( LIBS = [ 'GLESv2', 'EGL' ] )
 	else:
 		local_env.Append( LIBS = [ 'GL' ] )
+	if g_decoder == 'ffmpeg':
+		local_env.Append( LIBS = [ 'avcodec', 'avformat', 'avutil', 'swscale', 'swresample', 'z', 'va', 'bz2' ] )
 
 source_list = core_list
 source_list += idlib_objects

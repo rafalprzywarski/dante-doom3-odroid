@@ -41,6 +41,154 @@ extern "C" {
 #define CIN_silent	8
 #define CIN_shader	16
 
+#if defined(USE_FFMPEG)
+extern "C"
+{
+#ifndef INT64_C
+#define INT64_C(c) (c ## LL)
+#define UINT64_C(c) (c ## ULL)
+#endif
+
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+#include <libswscale/swscale.h>
+}
+
+/*
+================================================
+The internal *Texture Format Types*, ::textureFormat_t, are:
+================================================
+*/
+enum textureFormat_t
+{
+	FMT_NONE,
+	
+	//------------------------
+	// Standard color image formats
+	//------------------------
+	
+	FMT_RGBA8,			// 32 bpp
+	FMT_XRGB8,			// 32 bpp
+	
+	//------------------------
+	// Alpha channel only
+	//------------------------
+	
+	// Alpha ends up being the same as L8A8 in our current implementation, because straight
+	// alpha gives 0 for color, but we want 1.
+	FMT_ALPHA,
+	
+	//------------------------
+	// Luminance replicates the value across RGB with a constant A of 255
+	// Intensity replicates the value across RGBA
+	//------------------------
+	
+	FMT_L8A8,			// 16 bpp
+	FMT_LUM8,			//  8 bpp
+	FMT_INT8,			//  8 bpp
+	
+	//------------------------
+	// Compressed texture formats
+	//------------------------
+	
+	FMT_DXT1,			// 4 bpp
+	FMT_DXT5,			// 8 bpp
+	
+	//------------------------
+	// Depth buffer formats
+	//------------------------
+	
+	FMT_DEPTH,			// 24 bpp
+	
+	//------------------------
+	//
+	//------------------------
+	
+	FMT_X16,			// 16 bpp
+	FMT_Y16_X16,		// 32 bpp
+	FMT_RGB565,			// 16 bpp
+	
+	// RB: don't change above for legacy .bimage compatibility
+	FMT_ETC1_RGB8_OES,	// 4 bpp
+	FMT_SHADOW_ARRAY,	// 32 bpp * 6
+	// RB end
+};
+
+int BitsForFormat( textureFormat_t format );
+
+/*
+================================================
+DXT5 color formats
+================================================
+*/
+enum textureColor_t
+{
+	CFM_DEFAULT,			// RGBA
+	CFM_NORMAL_DXT5,		// XY format and use the fast DXT5 compressor
+	CFM_YCOCG_DXT5,			// convert RGBA to CoCg_Y format
+	CFM_GREEN_ALPHA,		// Copy the alpha channel to green
+	
+	// RB: don't change above for legacy .bimage compatibility
+	CFM_YCOCG_RGBA8,
+	// RB end
+};
+
+/*
+================================================
+idImageOpts hold parameters for texture operations.
+================================================
+*/
+class idImageOpts
+{
+public:
+	idImageOpts();
+
+	bool	operator==( const idImageOpts& opts );
+
+	//---------------------------------------------------
+	// these determine the physical memory size and layout
+	//---------------------------------------------------
+
+	textureType_t		textureType;
+	textureFormat_t		format;
+	textureColor_t		colorFormat;
+	int					width;
+	int					height;			// not needed for cube maps
+	int					numLevels;		// if 0, will be 1 for NEAREST / LINEAR filters, otherwise based on size
+	bool				gammaMips;		// if true, mips will be generated with gamma correction
+	bool				readback;		// 360 specific - cpu reads back from this texture, so allocate with cached memory
+};
+
+/*
+========================
+idImageOpts::idImageOpts
+========================
+*/
+idImageOpts::idImageOpts()
+{
+	format			= FMT_NONE;
+	colorFormat		= CFM_DEFAULT;
+	width			= 0;
+	height			= 0;
+	numLevels		= 0;
+	textureType		= TT_2D;
+	gammaMips		= false;
+	readback		= false;
+
+};
+
+/*
+========================
+idImageOpts::operator==
+========================
+*/
+bool idImageOpts::operator==( const idImageOpts& opts )
+{
+	return ( memcmp( this, &opts, sizeof( *this ) ) == 0 );
+}
+
+#endif
+
 class idCinematicLocal : public idCinematic
 {
 	public:
@@ -54,31 +202,47 @@ class idCinematicLocal : public idCinematic
 		virtual void			ResetTime(int time);
 
 	private:
-		intptr_t			mcomp[256];
-		byte 					**qStatus[2];
+#if defined(USE_FFMPEG)
+		int						video_stream_index;
+		AVFormatContext*		fmt_ctx;
+		AVFrame*				frame;
+		AVFrame*				frame2;
+		AVCodec*				dec;
+		AVCodecContext*			dec_ctx;
+		SwsContext*				img_convert_ctx;
+		bool					hasFrame;
+		long					framePos;
+	
+		cinData_t				ImageForTimeFFMPEG( int milliseconds );
+		bool					InitFromFFMPEGFile( const char* qpath, bool looping );
+		void					FFMPEGReset();
+#endif
+		intptr_t				mcomp[256];
+		cinStatus_t				status;
+		byte					**qStatus[2];
 		idStr					fileName;
 		int						CIN_WIDTH, CIN_HEIGHT;
-		idFile 				*iFile;
-		cinStatus_t				status;
-		int					tfps;
-		int					RoQPlayed;
-		int					ROQSize;
+		idFile					*iFile;
+		//cinStatus_t				status;
+		int						tfps;
+		int						RoQPlayed;
+		int						ROQSize;
 		unsigned int			RoQFrameSize;
-		int					onQuad;
-		int					numQuads;
-		int					samplesPerLine;
+		int						onQuad;
+		int						numQuads;
+		int						samplesPerLine;
 		unsigned int			roq_id;
-		int					screenDelta;
+		int						screenDelta;
 		byte 					*buf;
-		int					samplesPerPixel;				// defaults to 2
+		int						samplesPerPixel;				// defaults to 2
 		unsigned int			xsize, ysize, maxsize, minsize;
-		int					normalBuffer0;
-		int					roq_flags;
-		int					roqF0;
-		int					roqF1;
-		int					t[2];
-		int					roqFPS;
-		int					drawX, drawY;
+		int						normalBuffer0;
+		int						roq_flags;
+		int						roqF0;
+		int						roqF1;
+		int						t[2];
+		int						roqFPS;
+		int						drawX, drawY;
 
 		int						animationLength;
 		int						startTime;
@@ -152,6 +316,10 @@ idCinematicLocal::InitCinematic
 */
 void idCinematic::InitCinematic(void)
 {
+#if defined(USE_FFMPEG)
+	avcodec_register_all();
+	av_register_all();
+#endif
 	float t_ub,t_vr,t_ug,t_vg;
 	int i;
 
@@ -273,6 +441,21 @@ idCinematicLocal::idCinematicLocal
 */
 idCinematicLocal::idCinematicLocal()
 {
+#if defined(USE_FFMPEG)
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(55,28,1)
+	frame  = av_frame_alloc();
+	frame2 = av_frame_alloc();
+#else
+  	frame  = avcodec_alloc_frame();
+  	frame2 = avcodec_alloc_frame();
+#endif // LIBAVCODEC_VERSION_INT
+	dec_ctx = NULL;
+	fmt_ctx = NULL;
+	video_stream_index = -1;
+	img_convert_ctx = NULL;
+	hasFrame = false;
+#endif
+
 	image = NULL;
 	status = FMV_EOF;
 	buf = NULL;
@@ -295,7 +478,207 @@ idCinematicLocal::~idCinematicLocal()
 	qStatus[0] = NULL;
 	Mem_Free(qStatus[1]);
 	qStatus[1] = NULL;
+	
+#if defined(USE_FFMPEG)
+	av_freep( &frame );
+	av_freep( &frame2 );
+	
+	if( fmt_ctx )
+	{
+		avformat_free_context( fmt_ctx );
+	}
+	
+	if( img_convert_ctx )
+	{
+		sws_freeContext( img_convert_ctx );
+	}
+#endif
 }
+
+struct buffer_data 
+{
+	uint8_t *_ptr;
+    uint8_t *ptr;
+    size_t size;
+};
+
+struct buffer_data bd = { 0 };
+static bool g_intro = false;
+
+static int read_packed( void *opaque, uint8_t *buf, int buf_size )
+{
+    struct buffer_data *bd = (struct buffer_data *)opaque;
+    buf_size = FFMIN(buf_size, bd->size);
+
+    // printf("ptr:%p size:%zu\n", bd->ptr, bd->size);
+
+    /* copy internal buffer data to buf */
+    memcpy(buf, bd->ptr, buf_size);
+    bd->ptr  += buf_size;
+    bd->size -= buf_size;
+
+    return buf_size;
+}
+
+/*
+==============
+idCinematicLocal::InitFromFFMPEGFile
+==============
+*/
+#if defined(USE_FFMPEG)
+bool idCinematicLocal::InitFromFFMPEGFile( const char* qpath, bool amilooping )
+{
+	int ret;
+	looping = amilooping;
+	startTime = 0;
+	ROQSize = 0;
+	size_t avio_ctx_buffer_size = 4096;	
+	
+	status = FMV_IDLE;
+	
+	CIN_HEIGHT = DEFAULT_CIN_HEIGHT;
+	CIN_WIDTH  = DEFAULT_CIN_WIDTH;
+	
+	img_convert_ctx = NULL;
+	
+	if( dec_ctx )
+	{
+		avcodec_close( dec_ctx );
+		av_free(dec_ctx);
+	}
+	
+	if( fmt_ctx )
+	{
+		avformat_close_input( &fmt_ctx );
+		avformat_free_context( fmt_ctx );
+	}	
+	
+	if( idStr::Cmpn( qpath, "sound/vo", 8 ) == 0 )
+	{
+		idStr newPath( qpath );
+		newPath.Replace( "sound/vo", "sound/VO" );
+	}
+
+	if( !fmt_ctx )
+		fmt_ctx = avformat_alloc_context();
+
+	ROQSize = iFile->Length();
+	bd.ptr  = ( uint8_t* )av_malloc( ROQSize );
+	bd.size = ROQSize;
+	bd._ptr = bd.ptr;
+	iFile->Read( bd.ptr, ROQSize );
+	iFile->Seek(0, FS_SEEK_SET);
+
+ 	fmt_ctx->pb = avio_alloc_context( file, avio_ctx_buffer_size, 0, &bd, &read_packed, NULL, NULL );
+	
+	// Need to probe buffer for input format unless you already know it
+	AVProbeData probe_data;
+	probe_data.buf_size = ROQSize;
+	probe_data.filename = "";
+	probe_data.buf = bd.ptr;
+	
+	fmt_ctx->iformat = av_probe_input_format( &probe_data, 1 );
+	
+	if( ( ret = avformat_open_input( &fmt_ctx, "", NULL, NULL ) ) < 0 )
+	{
+		common->Warning( "idCinematic: Cannot open FFMPEG video file: '%s', %d\n", qpath, looping );
+		return false;
+	}
+	
+	if( ( ret = avformat_find_stream_info( fmt_ctx, NULL ) ) < 0 )
+	{
+		common->Warning( "idCinematic: Cannot find stream info: '%s', %d\n", qpath, looping );
+		return false;
+	}
+	
+	/* select the video stream */
+	ret = av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, &dec, 0 );
+	if( ret < 0 )
+	{
+		common->Warning( "idCinematic: Cannot find a video stream in: '%s', %d\n", qpath, looping );
+		return false;
+	}
+
+	fmt_ctx->flags = AVFMT_FLAG_CUSTOM_IO | AVFMT_FLAG_DISCARD_CORRUPT;
+
+	video_stream_index = ret;
+	dec_ctx = fmt_ctx->streams[video_stream_index]->codec;
+	dec_ctx->thread_count = 0; // Autodetect number of cores
+	dec_ctx->thread_type = FF_THREAD_SLICE;
+	
+	/* init the video decoder */
+	if( ( ret = avcodec_open2( dec_ctx, dec, NULL ) ) < 0 )
+	{
+		common->Warning( "idCinematic: Cannot open video decoder for: '%s', %d\n", qpath, looping );
+		return false;
+	}
+	
+	av_dump_format(fmt_ctx, 0, qpath, 0);
+	
+	CIN_WIDTH  = dec_ctx->width;
+	CIN_HEIGHT = dec_ctx->height;
+	/** Calculate Duration in seconds
+	  * This is the fundamental unit of time (in seconds) in terms
+	  * of which frame timestamps are represented. For fixed-fps content,
+	  * timebase should be 1/framerate and timestamp increments should be
+	  * identically 1.
+	  * - encoding: MUST be set by user.
+	  * - decoding: Set by libavcodec.
+	  */
+	AVRational avr = dec_ctx->time_base;
+	/**
+	 * For some codecs, the time base is closer to the field rate than the frame rate.
+	 * Most notably, H.264 and MPEG-2 specify time_base as half of frame duration
+	 * if no telecine is used ...
+	 *
+	 * Set to time_base ticks per frame. Default 1, e.g., H.264/MPEG-2 set it to 2.
+	 */
+	int ticksPerFrame = dec_ctx->ticks_per_frame;
+	float durationSec = static_cast<double>( fmt_ctx->streams[video_stream_index]->duration ) * static_cast<double>( ticksPerFrame ) / static_cast<double>( avr.den );
+	animationLength = durationSec * 1000;
+	frameRate = av_q2d( fmt_ctx->streams[video_stream_index]->r_frame_rate );
+	buf = NULL;
+	hasFrame = false;
+	framePos = -1;
+	common->Printf( "Loaded FFMPEG file: '%s', looping=%d %dx%d, %f FPS, %f sec\n", qpath, looping, dec_ctx->width, dec_ctx->height, frameRate, durationSec );
+	image = ( byte* )Mem_Alloc( dec_ctx->width * dec_ctx->height * 4 * 2);
+	avpicture_fill( ( AVPicture* )frame2, image, PIX_FMT_BGR32, dec_ctx->width, dec_ctx->height );
+	if( img_convert_ctx )
+	{
+		sws_freeContext( img_convert_ctx );
+	}
+	dec_ctx->pix_fmt = AV_PIX_FMT_YUV444P; // just use this format
+	img_convert_ctx = sws_getContext( dec_ctx->width, dec_ctx->height, dec_ctx->pix_fmt, dec_ctx->width, dec_ctx->height, PIX_FMT_BGR32, SWS_BICUBIC, NULL, NULL, NULL );
+	
+	startTime = 0;
+	ImageForTime( 0 );
+	status = FMV_PLAY; // first frame is done set it to PLAY, don't care about frame drops here 
+	
+	return true;
+}
+#endif
+
+/*
+==============
+idCinematicLocal::FFMPEGReset
+==============
+*/
+#if defined(USE_FFMPEG)
+void idCinematicLocal::FFMPEGReset()
+{
+	// startTime = 0;
+	framePos = -1;
+	
+	if( av_seek_frame( fmt_ctx, video_stream_index, 0, 0 ) >= 0 )
+	{
+		status = FMV_LOOPED;
+	}
+	else
+	{
+		status = FMV_EOF;
+	}
+}
+#endif
 
 /*
 ==============
@@ -310,16 +693,32 @@ bool idCinematicLocal::InitFromFile(const char *qpath, bool amilooping)
 
 	inMemory = 0;
 	animationLength = 100000;
-
 	if (strstr(qpath, "/") == NULL && strstr(qpath, "\\") == NULL) {
 		sprintf(fileName, "video/%s", qpath);
 	} else {
 		sprintf(fileName, "%s", qpath);
 	}
-
+	
 	iFile = fileSystem->OpenFileRead(fileName);
 
+#if defined(USE_FFMPEG)
+	if( strcmp( "video/idlogo.roq", fileName.c_str() ) == 0 )
+	{
+		g_intro = true;
+		if( !iFile )
+		{
+			RoQShutdown();
+			common->Warning( "idCinematic: Cannot open FFMPEG video file: '%s', %d\n", qpath, looping );
+			return false;
+		}
+		animationLength = 0;
+		hasFrame = false;
+		return InitFromFFMPEGFile( fileName.c_str(), amilooping );
+	}
+#endif
 	if (!iFile) {
+		RoQShutdown();
+		animationLength = 0;
 		return false;
 	}
 
@@ -370,6 +769,28 @@ void idCinematicLocal::Close()
 	}
 
 	RoQShutdown();
+	
+#if defined(USE_FFMPEG)
+	hasFrame = false;
+	
+	if( img_convert_ctx )
+	{
+		sws_freeContext( img_convert_ctx );
+	}
+		
+	img_convert_ctx = NULL;
+	
+	if( dec_ctx )
+	{
+		avcodec_close( dec_ctx );
+	}
+	
+	if( fmt_ctx )
+	{
+		avformat_close_input( &fmt_ctx );
+	}
+	status = FMV_EOF;
+#endif
 }
 
 /*
@@ -400,6 +821,10 @@ idCinematicLocal::ImageForTime
 */
 cinData_t idCinematicLocal::ImageForTime(int thisTime)
 {
+#if defined(USE_FFMPEG)
+	if( strcmp( "video/idlogo.roq", fileName.c_str() ) == 0 || g_intro)
+		return ImageForTimeFFMPEG( thisTime );
+#endif
 	cinData_t	cinData;
 
 	if (thisTime < 0) {
@@ -483,6 +908,129 @@ cinData_t idCinematicLocal::ImageForTime(int thisTime)
 
 	return cinData;
 }
+
+/*
+==============
+idCinematicLocal::ImageForTimeFFMPEG
+==============
+*/
+#if defined(USE_FFMPEG)
+cinData_t idCinematicLocal::ImageForTimeFFMPEG( int thisTime )
+{
+	cinData_t	cinData;
+	
+	if( thisTime <= 0 )
+	{
+		thisTime = Sys_Milliseconds();
+	}
+	
+	memset( &cinData, 0, sizeof( cinData ) );
+	if( r_skipDynamicTextures.GetBool() || status == FMV_EOF || status == FMV_IDLE )
+	{
+		return cinData;
+	}
+	
+	if( !fmt_ctx )
+	{
+		return cinData;
+	}
+	
+	if( ( !hasFrame ) || startTime == -1 )
+	{
+		if( startTime == -1 )
+		{
+			FFMPEGReset();
+		}
+		startTime = thisTime;
+	}
+	
+	long desiredFrame = ( ( thisTime - startTime ) * frameRate ) / 950; // offset 50ms
+	if( desiredFrame < 0 )
+	{
+		desiredFrame = 0;
+	}
+	
+	if( desiredFrame < framePos )
+	{
+		FFMPEGReset();
+	}
+	
+	if( hasFrame && desiredFrame == framePos )
+	{
+		cinData.imageWidth = CIN_WIDTH;
+		cinData.imageHeight = CIN_HEIGHT;
+		cinData.status = status;
+		cinData.image = image;
+		return cinData;
+	}
+
+	AVPacket packet;
+
+	int frameFinished = 0;
+		
+	// Do a single frame by getting packets until we have a video frame
+	while( framePos < desiredFrame )
+	{
+		// if we got to the end or failed
+		if( av_read_frame( fmt_ctx, &packet ) < 0 )
+		{
+			status = FMV_IDLE;
+			// can't read any more, set to EOF
+			if( av_read_frame( fmt_ctx, &packet ) < 0 )
+			{
+				// is it really EOF or just frame drop
+				if( !fmt_ctx->pb->eof_reached )
+					return cinData;
+				// ok it's EOF just handle it as such
+				if( looping )
+				{
+					desiredFrame = 0;
+					FFMPEGReset();
+					framePos = -1;
+					startTime = thisTime;
+				}
+				else
+					status = FMV_EOF;
+				
+				g_intro = false;
+				common->Printf( "State: FFMPEG file reaches EOF\n" );
+				free( bd._ptr );
+				bd._ptr = NULL;
+				bd.size = 0;
+				
+				return cinData;
+			}
+		}
+		else
+		{
+			if( status == FMV_IDLE )
+				status = FMV_PLAY;
+		}
+		// Is this a packet from the video stream?
+		if( packet.stream_index == video_stream_index )
+		{
+			// Decode video frame
+			avcodec_decode_video2( dec_ctx, frame, &frameFinished, &packet );
+			if( frameFinished )
+				framePos++; // Ok the video frame is reached + sucessfully decoded  
+		}
+		// Free the packet that was allocated by av_read_frame
+		av_free_packet( &packet );
+	}
+
+	// We have reached the desired frame
+	// Convert the image from its native format to RGB
+	sws_scale( img_convert_ctx, frame->data, frame->linesize, 0, dec_ctx->height, frame2->data, frame2->linesize );
+	cinData.imageWidth = CIN_WIDTH;
+	cinData.imageHeight = CIN_HEIGHT;
+	cinData.status = status;
+	hasFrame = true;
+	cinData.image = image;
+
+	return cinData;
+}
+#endif
+
 
 /*
 ==============

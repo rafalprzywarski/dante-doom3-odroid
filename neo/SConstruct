@@ -265,8 +265,12 @@ CORECPPFLAGS.append( '-DXTHREADS' )
 BASECPPFLAGS.append( '-fmessage-length=0' )
 # gcc 4.0
 BASECPPFLAGS.append( '-fpermissive' )
-BASECPPFLAGS.append( '-D__ODROID__')
-
+BASECPPFLAGS.append( '-D__ODROID__' )
+if ( USE_FFMPEG == '1' ):
+	BASECPPFLAGS.append( '-DUSE_FFMPEG')
+	BASECPPFLAGS.append( '-std=c++11' )
+	g_decoder = 'ffmpeg'
+	
 if ( g_os == 'Linux' ):
 	# gcc 4.x option only - only export what we mean to from the game SO
 	BASECPPFLAGS.append( '-fvisibility=hidden' )
@@ -362,7 +366,7 @@ local_d3xp = 0
 # OpenGL
 local_opengl = 0
 
-GLOBALS = 'g_env g_env_noopt g_game_env g_os ID_MCHECK ALSA idlib_objects game_objects local_dedicated local_gamedll local_demo local_idlibpic local_curl local_d3xp local_opengl OPTCPPFLAGS NDK'
+GLOBALS = 'g_env g_env_noopt g_game_env g_os g_decoder ID_MCHECK ALSA idlib_objects game_objects local_dedicated local_gamedll local_demo local_idlibpic local_curl local_d3xp local_opengl OPTCPPFLAGS NDK'
 
 # end general configuration ----------------------
 

@@ -25,8 +25,9 @@ scons -j5 \
 	TARGET_ANDROID=0 \
 	TARGET_D3XP=1 \
 	TARGET_DEMO=0 \
+	USE_FFMPEG=0 \
 	\
-	BASEFLAGS='-I/usr/include/arm-linux-gnueabihf -I/usr/include' \
+	BASEFLAGS='-I/usr/include/arm-linux-gnueabihf -I/usr/include -I/usr/local/include -L/usr/local/lib' \
 	$*
 	
 if [ ! -d $GAME_DATA ]; then
@@ -73,7 +74,7 @@ cd /usr/local/share/pixmaps
 su -c "wget --quiet -N https://github.com/AreaScout/dante-doom3-odroid/raw/gh-pages/images/doom_3.png | cp $CUR_DIR/doom.arm /usr/local/bin/. | cat <<EOM >$LINK_PATH
 [Desktop Entry]
 Name=Doom3
-Version=1
+Version=1.3
 Exec=doom.arm
 Comment=Doom3
 Icon=doom_3
