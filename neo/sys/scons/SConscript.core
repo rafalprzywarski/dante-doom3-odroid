@@ -349,6 +349,8 @@ if g_os == 'Android':
 else:
 	local_env.Append( LIBS = [ 'pthread', 'dl', 'vorbisfile', 'jpeg' ] )
 
+ffmpeg_lib = []	
+	
 if ( local_dedicated == 0 ):
 	if g_os == 'Linux':
 		local_env.Append( LIBS = [ 'X11' ] )
@@ -359,11 +361,14 @@ if ( local_dedicated == 0 ):
 	else:
 		local_env.Append( LIBS = [ 'GL' ] )
 	if g_decoder == 'ffmpeg':
-		local_env.Append( LIBS = [ 'avcodec', 'avformat', 'avutil', 'swscale', 'swresample', 'z', 'va', 'bz2' ] )
+		local_env.Append( LIBPATH = [ '/usr/local/lib' ] )
+		ffmpeg_lib += [ '/usr/local/lib/libavcodec.a', '/usr/local/lib/libavformat.a', '/usr/local/lib/libavutil.a', '/usr/local/lib/libswscale.a', '/usr/local/lib/libswresample.a' ]
+		local_env.Append( LIBS = [ 'z', 'va', 'bz2' ] )
 
 source_list = core_list
 source_list += idlib_objects
 source_list += sound_lib
+source_list += ffmpeg_lib
 
 if g_os == 'Android':
 	source_list += jpeg_lib
