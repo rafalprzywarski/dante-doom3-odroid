@@ -1,9 +1,11 @@
 #!/bin/bash
 
 LINK_PATH="/usr/local/share/applications/doom3.desktop"
-BASE_URL="https://github.com/AreaScout/dante-doom3-odroid/raw/gh-pages/config/DoomConfig.cfg"
+CONFIG_URL="https://github.com/AreaScout/dante-doom3-odroid/raw/gh-pages/config/DoomConfig.cfg"
 SHADER_URL="https://github.com/AreaScout/gl2progs.git"
+FFMPEG_URL="https://github.com/FFmpeg/FFmpeg.git"
 GAME_DATA=$HOME"/.doom3"
+CUR_DIR=$PWD
 
 set -e
 
@@ -13,6 +15,26 @@ export PATH=/usr/bin:$PATH
 export ARCH=arm-linux-gnueabihf
 export CXX=g++
 export CC=gcc
+
+read -p "Do you wish to build doom3 to play video with ffmpeg decoder ?" -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+    export USE_FFMPEG=1
+	if [ ! -f $CUR_DIR/FFmpeg ]; then
+		echo -e "\nOk downloading FFmpeg"
+		git clone --depth 1 $FFMPEG_URL
+		cd $CUR_DIR/FFmpeg
+		echo -e "\nBuild FFmpeg, this can take a while"
+		./configure --disable-programs --enable-neon --enable-thumb --enable-pthreads
+		make -j5 V=0
+		echo -e "\nBuild successfully finished please identify yourself to install FFmpeg"
+		su -c "make install"
+		cd ..
+	fi
+else
+	export USE_FFMPEG=0
+fi
 
 scons -j5 \
 	ARCH='arm' \
@@ -25,27 +47,27 @@ scons -j5 \
 	TARGET_ANDROID=0 \
 	TARGET_D3XP=1 \
 	TARGET_DEMO=0 \
-	USE_FFMPEG=0 \
+	USE_FFMPEG=$USE_FFMPEG \
 	\
 	BASEFLAGS='-I/usr/include/arm-linux-gnueabihf -I/usr/include -I/usr/local/include -L/usr/local/lib' \
 	$*
 	
-if [ ! -d $GAME_DATA ]; then
-	mkdir -p $GAME_DATA/{base,demo,d3xp}
-fi
-
-CUR_DIR=$PWD
+# Don't care if the directories still exist or not
+mkdir -p $GAME_DATA/{base,demo,d3xp}
 
 strip doom.arm gamearm-base.so gamearm-d3xp.so 
 
 cp gamearm-base.so $GAME_DATA/base/gamearm.so
 cp gamearm-d3xp.so $GAME_DATA/d3xp/gamearm.so
+if [ TARGET_DEMO == 1 ]; then
+	cp gamearm-demo.so $GAME_DATA/demo/gamearm.so
+fi
 
 cd $GAME_DATA/base
 
 if [ ! -f $GAME_DATA/base/DoomConfig.cfg ]; then
 	echo -e "\nDownload initial DoomConfig.cfg"
-	if  ! wget --quiet $BASE_URL ; then
+	if  ! wget --quiet $CONFIG_URL ; then
 		echo "error: can't get DoomConfig.cfg"
 	fi
 	cp DoomConfig.cfg ../d3xp/.
@@ -63,7 +85,7 @@ fi
 
 echo -e "\nExecutable (doom.arm) is now available in "$CUR_DIR"\nYou should now copy your *.pk4 files to "$GAME_DATA"/base, "$GAME_DATA"/d3xp or "$GAME_DATA"/demo\n" 
 
-read -p "Do you wish to install and create desktop menu? " -n 1 -r
+read -p "Do you wish to install and create desktop menu ? " -n 1 -r
 echo
 if [[ ! $REPLY =~ ^[Yy]$ ]]
 then
