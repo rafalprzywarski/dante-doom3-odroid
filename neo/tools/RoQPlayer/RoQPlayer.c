@@ -47,7 +47,7 @@ BYTE                                    *image = NULL;
 
 struct buffer_data {
     uint8_t *ptr;
-    size_t size; ///< size left in the buffer
+    size_t size; // size left in the buffer
 };
 
 static int read_packet( void *opaque, uint8_t *buf, int buf_size )
@@ -295,8 +295,8 @@ int main(int argc, char *argv[])
     if ( argc != 2 )
     {
         fprintf( stderr, "usage: %s input_file\n"
-                "API example program to show how to read from a custom buffer "
-                "accessed through AVIOContext.\n", argv[0] );
+                "simple RoQ VideoPlayer"
+                "accessed through FFmpeg's AVIOContext.\n", argv[0] );
         return 1;
     }
     input_filename = argv[1];
@@ -397,12 +397,6 @@ int main(int argc, char *argv[])
         av_freep( &avio_ctx );
     }
     av_file_unmap( buffer, buffer_size );
-
-    if ( ret < 0 )
-    {
-        fprintf( stderr, "Error occurred: \n" );
-        return 1;
-    }
 
     free( image );
     return 0;
