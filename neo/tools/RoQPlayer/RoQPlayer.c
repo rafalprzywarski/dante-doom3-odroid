@@ -244,24 +244,24 @@ void makeSurface()
     XMapWindow( XDisplay, native_window );
     XSendEvent( XDisplay, DefaultRootWindow( XDisplay ), False, SubstructureRedirectMask | SubstructureNotifyMask, &xev );
     XFlush( XDisplay );
-    XStoreName( XDisplay, native_window, "oShaderToy" );
+    XStoreName( XDisplay, native_window, "RoQPlayer" );
     XSetWMProtocols( XDisplay, native_window, &XWMDeleteMessage, 1 );
 
     // get an EGL display connection
     m_display = eglGetDisplay(( EGLNativeDisplayType ) XDisplay);
     if( m_display == EGL_NO_DISPLAY )
     {
-        printf("error getting display\n");
+        fprintf( stderr, "EGL: error get display\n" );
         exit(EXIT_FAILURE);
     }
     // initialize the EGL display connection
     int major,minor;
 
     result = eglInitialize( m_display, &major, &minor );
-    printf( "EGL init version %d.%d\n", major, minor );
+    fprintf( stdout, "EGL: init version %d.%d\n", major, minor );
     if( result == EGL_FALSE )
     {
-        printf("error initialising display\n");
+        fprintf( stderr, "EGL: error initialising display\n" );
         exit( EXIT_FAILURE );
     }
     // get our config from the config class
@@ -279,22 +279,22 @@ void makeSurface()
     result = eglChooseConfig( m_display, attribute_list, &config, 1, &totalConfigsFound );
     if ( result != EGL_TRUE || totalConfigsFound == 0 )
     {
-        printf( "EGLport ERROR: Unable to query for available configs, found %d.\n", totalConfigsFound );
-        return;
+        fprintf( stderr, "EGL: Unable to query for available configs, found %d.\n", totalConfigsFound );
+        exit( EXIT_FAILURE );
     }
 
     // bind the OpenGL API to the EGL
     result = eglBindAPI( EGL_OPENGL_ES_API );
     if( result == EGL_FALSE )
     {
-        printf("error binding API\n");
+        fprintf( stderr, "EGL: error binding API\n");
         exit( EXIT_FAILURE );
     }
     // create an EGL rendering context
     m_context = eglCreateContext(m_display, config, EGL_NO_CONTEXT, context_attributes);
     if( m_context == EGL_NO_CONTEXT )
     {
-        printf( "couldn't get a valid context\n" );
+        fprintf( stderr, "EGL: couldn't get a valid context\n" );
         exit( EXIT_FAILURE );
     }
     // finally we can create a new surface using this config and window
@@ -360,7 +360,7 @@ int main(int argc, char *argv[])
     ret = avformat_open_input( &fmt_ctx, NULL, NULL, NULL );
     if ( ret < 0 )
     {
-        fprintf(stderr, "Could not open input\n");
+        fprintf( stderr, "Could not open input\n" );
         return 1;
     }
 
@@ -419,6 +419,13 @@ int main(int argc, char *argv[])
         av_freep( &avio_ctx );
     }
     av_file_unmap( buffer, buffer_size );
+	
+    eglMakeCurrent(m_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    if(eglDestroySurface(m_display, m_surface) && eglDestroyContext(m_display, m_context) && eglTerminate(m_display))
+    {
+        m_display = m_surface = m_context = NULL;
+        fprintf( stdout, "EGL: destroy context ok\n" );
+    }		
 
     free( image );
     return 0;
