@@ -377,8 +377,8 @@ int GLX_Init(glimpParms_t a)
 		return false;
 	}
 
-	visinfo = malloc(sizeof(XVisualInfo));
-	if (!(XMatchVisualInfo(dpy, scrnum, glConfig.depthBits, TrueColor, visinfo))) {
+	visinfo = (XVisualInfo*)malloc(sizeof(XVisualInfo));
+	if (!(XMatchVisualInfo(dpy, scrnum, 32, TrueColor, visinfo))) {
 		common->Printf("Couldn't get a visual\n");
 		return false;
 	}

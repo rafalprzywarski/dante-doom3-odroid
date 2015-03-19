@@ -163,6 +163,7 @@ TARGET_MONO = '0'
 TARGET_DEMO = '0'
 TARGET_OPENGL = '0'
 TARGET_ANDROID = '0'
+USE_FFMPEG = '0'
 NDK = ''
 IDNET_HOST = ''
 DEBUG_MEMORY = '0'
@@ -255,7 +256,7 @@ OPTCPPFLAGS = [ ]
 BASECPPFLAGS.append( BASEFLAGS.split() )
 BASECPPFLAGS.append( '-pipe' )
 # warn all
-BASECPPFLAGS.append( '-Wall' )
+#BASECPPFLAGS.append( '-Wall' )
 #BASECPPFLAGS.append( '-Wextra' )
 BASECPPFLAGS.append( '-Wno-sign-compare' )
 BASECPPFLAGS.append( '-Wno-unknown-pragmas' )
