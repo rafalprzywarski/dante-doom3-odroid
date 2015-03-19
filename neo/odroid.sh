@@ -29,7 +29,6 @@ then
 		./configure --disable-programs --enable-neon --enable-thumb --enable-pthreads
 		make -j5 V=0
 		echo -e "\nBuild successfully finished please identify yourself to install FFmpeg"
-		su -c "make install"
 		cd ..
 	fi
 else
