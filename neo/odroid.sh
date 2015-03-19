@@ -9,7 +9,15 @@ CUR_DIR=$PWD
 
 set -e
 
+old_head=`git log | head -n1 | cut -d " " -f2`
 git pull
+new_head=`git log | head -n1 | cut -d " " -f2`
+
+if [ $old_head != $new_head ]; then
+	echo -e "\nNew changes available -> retarting the script ..."
+	$CUR_DIR/odroid.sh
+	exit
+fi
 
 export PATH=/usr/bin:$PATH
 export ARCH=arm-linux-gnueabihf
