@@ -35,6 +35,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]
 then
     export USE_FFMPEG=1
 	if [ ! -d $CUR_DIR/FFmpeg ]; then
+		echo 'neo/FFmpeg' >> ../.gitignore
 		echo -e "\nOk downloading FFmpeg"
 		git clone --depth 1 $FFMPEG_URL
 		cd $CUR_DIR/FFmpeg
