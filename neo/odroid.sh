@@ -21,8 +21,8 @@ fi
 
 export PATH=/usr/bin:$PATH
 export ARCH=arm-linux-gnueabihf
-export CXX=g++
-export CC=gcc
+export CXX=g++-4.9
+export CC=gcc-4.9
 
 read -p "Do you wish to build doom3 to play video with ffmpeg decoder ?" -n 1 -r
 echo
