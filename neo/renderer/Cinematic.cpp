@@ -504,7 +504,7 @@ struct buffer_data
 };
 
 struct buffer_data bd = { 0 };
-static bool g_intro = false;
+bool g_intro = false;
 
 static int read_packed( void *opaque, uint8_t *buf, int buf_size )
 {

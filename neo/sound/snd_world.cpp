@@ -1556,6 +1556,7 @@ void idSoundWorldLocal::PlayShaderDirectly(const char *shaderName, int channel)
 		localSound->StopSound(SCHANNEL_ANY);
 	} else if (localSound) {
 		localSound->StopSound(channel);
+		g_intro = false;
 	}
 
 	if (!shaderName || !shaderName[0]) {
