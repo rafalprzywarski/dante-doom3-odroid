@@ -49,9 +49,9 @@ extern "C"
 #define UINT64_C(c) (c ## ULL)
 #endif
 
-#include "/usr/local/include/libavcodec/avcodec.h"
-#include "/usr/local/include/libavformat/avformat.h"
-#include "/usr/local/include/libswscale/swscale.h"
+#include "../FFmpeg/libavcodec/avcodec.h"
+#include "../FFmpeg/libavformat/avformat.h"
+#include "../FFmpeg/libswscale/swscale.h"
 }
 
 /*
