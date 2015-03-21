@@ -110,7 +110,6 @@ class idSoundSample;
 class idSampleDecoder;
 class idSoundWorldLocal;
 
-extern bool g_intro;
 /*
 ===================================================================================
 
