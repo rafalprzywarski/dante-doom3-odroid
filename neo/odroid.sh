@@ -40,7 +40,8 @@ then
 		cd $CUR_DIR/FFmpeg
 		echo -e "\nBuilding FFmpeg, this can take a while"
 		./configure --disable-programs --enable-neon --enable-thumb --enable-pthreads
-		if [ $(make -j5 V=0) = "0" ]; then
+		make -j5 V=0
+		if [ $? = "0" ]; then
 			echo -e "\nBuild successfully finished"
 		else
 			echo -e "\nBuild error detected, disable FFmpeg support"
