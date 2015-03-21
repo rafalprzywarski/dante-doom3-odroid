@@ -29,20 +29,23 @@ else
 	export CC=gcc-4.9
 fi
 
-read -p "Do you wish to build doom3 to play video with ffmpeg decoder ?" -n 1 -r
+read -p "Do you wish to build doom3 to play video with ffmpeg support ?" -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
     export USE_FFMPEG=1
 	if [ ! -d $CUR_DIR/FFmpeg ]; then
 		echo 'neo/FFmpeg' >> ../.gitignore
-		echo -e "\nOk downloading FFmpeg"
 		git clone --depth 1 $FFMPEG_URL
 		cd $CUR_DIR/FFmpeg
-		echo -e "\nBuild FFmpeg, this can take a while"
+		echo -e "\nBuilding FFmpeg, this can take a while"
 		./configure --disable-programs --enable-neon --enable-thumb --enable-pthreads
-		make -j5 V=0
-		echo -e "\nBuild successfully finished please identify yourself to install FFmpeg"
+		if [ $(make -j5 V=0) = "0" ]; then
+			echo -e "\nBuild successfully finished"
+		else
+			echo -e "\nBuild error detected, disable FFmpeg support"
+			export USE_FFMPEG=0
+		fi
 		cd ..
 	fi
 else
