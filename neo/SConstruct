@@ -269,7 +269,8 @@ BASECPPFLAGS.append( '-fmessage-length=0' )
 BASECPPFLAGS.append( '-fpermissive' )
 BASECPPFLAGS.append( '-D__ODROID__' )
 if ( USE_FFMPEG == '1' ):
-	BASECPPFLAGS.append( '-DUSE_FFMPEG')
+	BASECPPFLAGS.append( '-DUSE_FFMPEG' )
+	BASECPPFLAGS.append( '-I' + Dir('.').abspath + '/FFmpeg' )
 	g_decoder = 'ffmpeg'
 	
 if ( g_os == 'Linux' ):
