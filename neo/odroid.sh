@@ -109,7 +109,7 @@ then
     exit 1
 fi
 
-cd /usr/local/share/pixmaps
+cd /usr/share/pixmaps
 su -c "wget --quiet -N https://github.com/AreaScout/dante-doom3-odroid/raw/gh-pages/images/doom_3.png | cp $CUR_DIR/doom.arm /usr/local/bin/. | cat <<EOM >$LINK_PATH
 [Desktop Entry]
 Name=Doom3
