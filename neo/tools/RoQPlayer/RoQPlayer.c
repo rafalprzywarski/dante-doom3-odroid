@@ -397,7 +397,7 @@ int main(int argc, char *argv[])
 
     image = ( BYTE* )malloc( img_width * img_height * 4 * 2 );
 
-    avpicture_fill( ( AVPicture* )frame2, image, PIX_FMT_BGR32, img_width, img_height );
+    avpicture_fill( ( AVPicture* )frame2, image, AV_PIX_FMT_BGR32, img_width, img_height );
 
     img_convert_ctx = sws_getContext( dec_ctx->width, dec_ctx->height, AV_PIX_FMT_YUV444P, img_width, img_height, AV_PIX_FMT_BGR32, SWS_BICUBIC, NULL, NULL, NULL );
 
