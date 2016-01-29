@@ -245,10 +245,11 @@ LINK = CXX
 BASECPPFLAGS = [ ]
 CORECPPPATH = [ ]
 CORELIBPATH = [ ]
-CORECPPFLAGS = [ ]
-GAMECPPFLAGS = [ ]
-BASELINKFLAGS = [ ]
-CORELINKFLAGS = [ ]
+CORECPPFLAGS = [ '-I/opt/vc/include', '-I/opt/vc/include/interface/vcos/pthreads', '-I/opt/vc/include/interface/vmcs_host/linux' ]
+GAMECPPFLAGS = [ '-I/opt/vc/include', '-I/opt/vc/include/interface/vcos/pthreads', '-I/opt/vc/include/interface/vmcs_host/linux' ]
+BASELINKFLAGS = [ '-L/opt/vc/lib', '-L/lib/arm-linux-gnueabihf', '-lrt' ]
+CORELINKFLAGS = [ '-L/opt/vc/lib', '-L/lib/arm-linux-gnueabihf', '-lbcm_host', '-lvchiq_arm', '-lrt' ]
+
 
 # for release build, further optimisations that may not work on all files
 OPTCPPFLAGS = [ ]
