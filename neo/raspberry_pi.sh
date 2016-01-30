@@ -1,7 +1,6 @@
 #!/bin/bash
 
 LINK_PATH="/usr/local/share/applications/doom3.desktop"
-CONFIG_URL="https://github.com/AreaScout/dante-doom3-odroid/raw/gh-pages/config/DoomConfig.cfg"
 FFMPEG_URL="https://github.com/FFmpeg/FFmpeg.git"
 GAME_DATA=$HOME"/.doom3"
 CUR_DIR=$PWD
@@ -73,20 +72,15 @@ echo "Install shaders in ~/.doom3/base/gl2progs"
 mkdir -p $GAME_DATA/base/gl2progs
 cp -r gl2progs/* $GAME_DATA/base/gl2progs/
 
-cd $GAME_DATA/base
-
-if [ ! -f $GAME_DATA/base/DoomConfig.cfg ]; then
-	echo -e "\nDownload initial DoomConfig.cfg"
-	if  ! wget --quiet $CONFIG_URL ; then
-		echo "error: can't get DoomConfig.cfg"
-	fi
-	cp DoomConfig.cfg ../d3xp/.
-	cp DoomConfig.cfg ../demo/.
-	echo "Installed it in ~/.doom3/base, ~/.doom3/d3xp and ~/.doom3/demo"
-fi
+cp config/DoomConfig.cfg $GAME_DATA/base/
+cp config/DoomConfig.cfg $GAME_DATA/d3xp/
+cp config/DoomConfig.cfg $GAME_DATA/demo/
+echo "Installed DoomConfig.cfg in ~/.doom3/base, ~/.doom3/d3xp and ~/.doom3/demo"
 
 echo -e "\nExecutable (doom.arm) is now available in "$CUR_DIR"\nYou should now copy your *.pk4 files to "$GAME_DATA"/base, "$GAME_DATA"/d3xp or "$GAME_DATA"/demo\n"
 exit
+
+cd $GAME_DATA/base
 
 read -p "Do you wish to install and create desktop menu ? " -n 1 -r
 echo
