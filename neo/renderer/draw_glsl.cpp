@@ -66,8 +66,8 @@ void	RB_GLSL_DrawInteraction(const drawInteraction_t *din)
 	static const float zero[4] = { 0, 0, 0, 0 };
 	static const float one[4] = { 1, 1, 1, 1 };
 	static const float negOne[4] = { -1, -1, -1, -1 };
-	
-	shaderProgram_t *shader = &interactionShader;	
+
+	shaderProgram_t *shader = &interactionShader;
 
 	// load all the vertex program parameters
 	GL_UniformMatrix4fv(offsetof(shaderProgram_t, textureMatrix), mat4_identity.ToFloatPtr());
@@ -124,7 +124,7 @@ void	RB_GLSL_DrawInteraction(const drawInteraction_t *din)
 	}
 	GL_Uniform1fv(offsetof(shaderProgram_t, specularExponent), &f);
 	glUniform1f(glGetUniformLocation(shader->program, "u_brightness"), glConfig.valBrightness);
-	
+
 	// set the textures
 
 	// texture 0 will be the per-surface bump map
@@ -399,12 +399,12 @@ static bool R_LinkGLSLShader(shaderProgram_t *shaderProgram, bool needsAttribute
 	glAttachShader(shaderProgram->program, shaderProgram->fragmentShader);
 
 	if (needsAttributes) {
-		glBindAttribLocation(shaderProgram->program, 8, "attr_TexCoord");
-		glBindAttribLocation(shaderProgram->program, 9, "attr_Tangent");
-		glBindAttribLocation(shaderProgram->program, 10, "attr_Bitangent");
-		glBindAttribLocation(shaderProgram->program, 11, "attr_Normal");
-		glBindAttribLocation(shaderProgram->program, 12, "attr_Vertex");
-		glBindAttribLocation(shaderProgram->program, 13, "attr_Color");
+		glBindAttribLocation(shaderProgram->program, 1, "attr_TexCoord");
+		glBindAttribLocation(shaderProgram->program, 2, "attr_Tangent");
+		glBindAttribLocation(shaderProgram->program, 3, "attr_Bitangent");
+		glBindAttribLocation(shaderProgram->program, 4, "attr_Normal");
+		glBindAttribLocation(shaderProgram->program, 5, "attr_Vertex");
+		glBindAttribLocation(shaderProgram->program, 6, "attr_Color");
 	}
 
 	glLinkProgram(shaderProgram->program);
@@ -416,6 +416,8 @@ static bool R_LinkGLSLShader(shaderProgram_t *shaderProgram, bool needsAttribute
 		common->Printf("VS:\n%.*s\n", len, buf);
 		glGetShaderInfoLog(shaderProgram->fragmentShader, sizeof(buf), &len, buf);
 		common->Printf("FS:\n%.*s\n", len, buf);
+    glGetProgramInfoLog(shaderProgram->program, sizeof(buf), &len, buf);
+    common->Printf("SP:\n%.*s\n", len, buf);
 	}
 
 	if (!linked) {
@@ -493,7 +495,7 @@ static void RB_GLSL_GetUniformLocations(shaderProgram_t *shader)
 	shader->attr_Normal = glGetAttribLocation(shader->program, "attr_Normal");
 	shader->attr_Vertex = glGetAttribLocation(shader->program, "attr_Vertex");
 	shader->attr_Color = glGetAttribLocation(shader->program, "attr_Color");
-	
+
 	for (i = 0; i < MAX_VERTEX_PARMS; i++) {
 		idStr::snPrintf(buffer, sizeof(buffer), "u_vertexParm%d", i);
 		shader->u_vertexParm[i] = glGetAttribLocation(shader->program, buffer);
