@@ -163,7 +163,7 @@ void Posix_PollInput()
     {
     	switch(event.type)
     	{
-            case SDL_MOUSEMOTION:
+            case SDL_MOUSEMOTION: {
                 common->Printf("SDL_MOUSEMOTION: xrel: %d yrel: %d\n", (int) event.motion.xrel, (int) event.motion.yrel);
                 if (!in_dgamouse.GetBool())
                     SDL_WarpMouse((glConfig.vidWidth/2),(glConfig.vidHeight/2));
@@ -173,6 +173,74 @@ void Posix_PollInput()
                 Posix_QueEvent(SE_MOUSE, dx, dy, 0, NULL);
                 Posix_AddMousePollEvent(M_DELTAX, dx);
                 Posix_AddMousePollEvent(M_DELTAY, dy);
+                break;
+            }
+            case SDL_MOUSEBUTTONDOWN:
+                if (event.button.button == 4) {
+                    Posix_QueEvent(SE_KEY, K_MWHEELUP, true, 0, NULL);
+
+                    if (!Posix_AddMousePollEvent(M_DELTAZ, 1))
+                        return;
+                } else if (event.button.button == 5) {
+                    Posix_QueEvent(SE_KEY, K_MWHEELDOWN, true, 0, NULL);
+
+                    if (!Posix_AddMousePollEvent(M_DELTAZ, -1))
+                        return;
+                } else {
+                    int b = -1;
+
+                    if (event.button.button == 1) {
+                        b = 0;		// K_MOUSE1
+                    } else if (event.button.button == 2) {
+                        b = 2;		// K_MOUSE3
+                    } else if (event.button.button == 3) {
+                        b = 1;		// K_MOUSE2
+                    } else if (event.button.button == 6) {
+                        b = 3;		// K_MOUSE4
+                    } else if (event.button.button == 7) {
+                        b = 4;		// K_MOUSE5
+                    }
+
+                    if (b == -1 || b > 4) {
+                        common->DPrintf("X ButtonPress %d not supported\n", event.button.button);
+                    } else {
+                        Posix_QueEvent(SE_KEY, K_MOUSE1 + b, true, 0, NULL);
+
+                        if (!Posix_AddMousePollEvent(M_ACTION1 + b, true))
+                            return;
+                    }
+                }
+                break;
+            case SDL_MOUSEBUTTONUP:
+                if (event.button.button == 4) {
+                    Posix_QueEvent(SE_KEY, K_MWHEELUP, false, 0, NULL);
+                } else if (event.button.button == 5) {
+                    Posix_QueEvent(SE_KEY, K_MWHEELDOWN, false, 0, NULL);
+                } else {
+                    int b = -1;
+
+                    if (event.button.button == 1) {
+                        b = 0;
+                    } else if (event.button.button == 2) {
+                        b = 2;
+                    } else if (event.button.button == 3) {
+                        b = 1;
+                    } else if (event.button.button == 6) {
+                        b = 3;		// K_MOUSE4
+                    } else if (event.button.button == 7) {
+                        b = 4;		// K_MOUSE5
+                    }
+
+                    if (b == -1 || b > 4) {
+                        common->DPrintf("X ButtonRelease %d not supported\n", event.button.button);
+                    } else {
+                        Posix_QueEvent(SE_KEY, K_MOUSE1 + b, false, 0, NULL);
+
+                        if (!Posix_AddMousePollEvent(M_ACTION1 + b, false))
+                            return;
+                    }
+                }
+
                 break;
         }
     }
@@ -256,124 +324,6 @@ void Posix_PollInput()
 
 				break;
 
-			case ButtonPress:
-
-				if (event.xbutton.button == 4) {
-					Posix_QueEvent(SE_KEY, K_MWHEELUP, true, 0, NULL);
-
-					if (!Posix_AddMousePollEvent(M_DELTAZ, 1))
-						return;
-				} else if (event.xbutton.button == 5) {
-					Posix_QueEvent(SE_KEY, K_MWHEELDOWN, true, 0, NULL);
-
-					if (!Posix_AddMousePollEvent(M_DELTAZ, -1))
-						return;
-				} else {
-					b = -1;
-
-					if (event.xbutton.button == 1) {
-						b = 0;		// K_MOUSE1
-					} else if (event.xbutton.button == 2) {
-						b = 2;		// K_MOUSE3
-					} else if (event.xbutton.button == 3) {
-						b = 1;		// K_MOUSE2
-					} else if (event.xbutton.button == 6) {
-						b = 3;		// K_MOUSE4
-					} else if (event.xbutton.button == 7) {
-						b = 4;		// K_MOUSE5
-					}
-
-					if (b == -1 || b > 4) {
-						common->DPrintf("X ButtonPress %d not supported\n", event.xbutton.button);
-					} else {
-						Posix_QueEvent(SE_KEY, K_MOUSE1 + b, true, 0, NULL);
-
-						if (!Posix_AddMousePollEvent(M_ACTION1 + b, true))
-							return;
-					}
-				}
-
-				break;
-
-			case ButtonRelease:
-
-				if (event.xbutton.button == 4) {
-					Posix_QueEvent(SE_KEY, K_MWHEELUP, false, 0, NULL);
-				} else if (event.xbutton.button == 5) {
-					Posix_QueEvent(SE_KEY, K_MWHEELDOWN, false, 0, NULL);
-				} else {
-					b = -1;
-
-					if (event.xbutton.button == 1) {
-						b = 0;
-					} else if (event.xbutton.button == 2) {
-						b = 2;
-					} else if (event.xbutton.button == 3) {
-						b = 1;
-					} else if (event.xbutton.button == 6) {
-						b = 3;		// K_MOUSE4
-					} else if (event.xbutton.button == 7) {
-						b = 4;		// K_MOUSE5
-					}
-
-					if (b == -1 || b > 4) {
-						common->DPrintf("X ButtonRelease %d not supported\n", event.xbutton.button);
-					} else {
-						Posix_QueEvent(SE_KEY, K_MOUSE1 + b, false, 0, NULL);
-
-						if (!Posix_AddMousePollEvent(M_ACTION1 + b, false))
-							return;
-					}
-				}
-
-				break;
-
-			case MotionNotify:
-
-				if (!mouse_active)
-					break;
-
-				if (in_dgamouse.GetBool()) {
-					dx = event.xmotion.x_root;
-					dy = event.xmotion.y_root;
-
-					Posix_QueEvent(SE_MOUSE, dx, dy, 0, NULL);
-
-					// if we overflow here, we'll get a warning, but the delta will be completely processed anyway
-					Posix_AddMousePollEvent(M_DELTAX, dx);
-
-					if (!Posix_AddMousePollEvent(M_DELTAY, dy))
-						return;
-				} else {
-					// if it's a center motion, we've just returned from our warp
-					// FIXME: we generate mouse delta on wrap return, but that lags us quite a bit from the initial event..
-					if (event.xmotion.x == glConfig.vidWidth / 2 &&
-					    event.xmotion.y == glConfig.vidHeight / 2) {
-						mwx = glConfig.vidWidth / 2;
-						mwy = glConfig.vidHeight / 2;
-
-						Posix_QueEvent(SE_MOUSE, mx, my, 0, NULL);
-
-						Posix_AddMousePollEvent(M_DELTAX, mx);
-
-						if (!Posix_AddMousePollEvent(M_DELTAY, my))
-							return;
-
-						mx = my = 0;
-						break;
-					}
-
-					dx = ((int) event.xmotion.x - mwx);
-					dy = ((int) event.xmotion.y - mwy);
-					mx += dx;
-					my += dy;
-
-					mwx = event.xmotion.x;
-					mwy = event.xmotion.y;
-					XWarpPointer(dpy,None,win,0,0,0,0, (glConfig.vidWidth/2),(glConfig.vidHeight/2));
-				}
-
-				break;
 		}
 	}*/
 }
