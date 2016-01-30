@@ -31,6 +31,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #include <pthread.h>
 #include <termios.h>
+#include <SDL/SDL.h>
 
 idCVar in_mouse("in_mouse", "1", CVAR_SYSTEM | CVAR_ARCHIVE, "");
 idCVar in_dgamouse("in_dgamouse", "1", CVAR_SYSTEM | CVAR_ARCHIVE, "");
@@ -41,10 +42,6 @@ static bool have_xkb = false;
 
 // toggled by grab calls - decides if we ignore MotionNotify events
 static bool mouse_active = false;
-
-// non-DGA pointer-warping mouse input
-static int mwx, mwy;
-static int mx = 0, my = 0;
 
 // time mouse was last reset, we ignore the first 50ms of the mouse to allow settling of events
 static int mouse_reset_time = 0;
@@ -132,6 +129,8 @@ void Sys_InitInput(void)
 	common->Printf("\n------- Input Initialization -------\n");
 	cmdSystem->AddCommand("in_clear", IN_Clear_f, CMD_FL_SYSTEM, "reset the input keys");
   nonblock(NB_ENABLE);
+  SDL_Init(SDL_INIT_VIDEO);
+  SDL_WarpMouse((glConfig.vidWidth/2),(glConfig.vidHeight/2));
 }
 
 //#define XEVT_DBG
@@ -158,6 +157,27 @@ Posix_PollInput
 */
 void Posix_PollInput()
 {
+    // from Quake3 sdl_input.c
+    SDL_Event event;
+    while (SDL_PollEvent(&event))
+    {
+    	switch(event.type)
+    	{
+            case SDL_MOUSEMOTION:
+                common->Printf("SDL_MOUSEMOTION: xrel: %d yrel: %d\n", (int) event.motion.xrel, (int) event.motion.yrel);
+                if (!in_dgamouse.GetBool())
+                    SDL_WarpMouse((glConfig.vidWidth/2),(glConfig.vidHeight/2));
+
+                int dx = event.motion.xrel;
+                int dy = event.motion.yrel;
+                Posix_QueEvent(SE_MOUSE, dx, dy, 0, NULL);
+                Posix_AddMousePollEvent(M_DELTAX, dx);
+                Posix_AddMousePollEvent(M_DELTAY, dy);
+                break;
+        }
+    }
+
+
   /*
 	static char buf[16];
 	static XEvent event;

@@ -354,7 +354,7 @@ ffmpeg_lib = []
 if ( local_dedicated == 0 ):
 	if g_os == 'Linux':
 		local_env.Append( LIBPATH = [ '/usr/lib' ] )
-		local_env.Append( LIBS = [ 'openal' ] )
+		local_env.Append( LIBS = [ 'openal', 'SDL' ] )
 	if ( local_opengl == 0 ):
 		local_env.Append( LIBS = [ 'GLESv2', 'EGL' ] )
 	else:
