@@ -58,11 +58,11 @@ scons -j5 \
 	BASELINKFLAGS='-L/opt/vc/lib ' \
 	CORELINKFLAGS='-L/opt/vc/lib -lbcm_host -lvchiq_arm ' \
 	$*
-	
+
 # Don't care if the directories still exist or not
 mkdir -p $GAME_DATA/{base,demo,d3xp}
 
-strip doom.arm gamearm-base.so gamearm-d3xp.so 
+strip doom.arm gamearm-base.so gamearm-d3xp.so
 
 cp gamearm-base.so $GAME_DATA/base/gamearm.so
 cp gamearm-d3xp.so $GAME_DATA/d3xp/gamearm.so
@@ -90,7 +90,8 @@ else
 	git pull
 fi
 
-echo -e "\nExecutable (doom.arm) is now available in "$CUR_DIR"\nYou should now copy your *.pk4 files to "$GAME_DATA"/base, "$GAME_DATA"/d3xp or "$GAME_DATA"/demo\n" 
+echo -e "\nExecutable (doom.arm) is now available in "$CUR_DIR"\nYou should now copy your *.pk4 files to "$GAME_DATA"/base, "$GAME_DATA"/d3xp or "$GAME_DATA"/demo\n"
+exit
 
 read -p "Do you wish to install and create desktop menu ? " -n 1 -r
 echo
