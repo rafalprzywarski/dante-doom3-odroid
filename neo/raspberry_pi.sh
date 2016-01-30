@@ -2,7 +2,6 @@
 
 LINK_PATH="/usr/local/share/applications/doom3.desktop"
 CONFIG_URL="https://github.com/AreaScout/dante-doom3-odroid/raw/gh-pages/config/DoomConfig.cfg"
-SHADER_URL="https://github.com/AreaScout/gl2progs.git"
 FFMPEG_URL="https://github.com/FFmpeg/FFmpeg.git"
 GAME_DATA=$HOME"/.doom3"
 CUR_DIR=$PWD
@@ -70,6 +69,10 @@ if [ TARGET_DEMO == 1 ]; then
 	cp gamearm-demo.so $GAME_DATA/demo/gamearm.so
 fi
 
+echo "Install shaders in ~/.doom3/base/gl2progs"
+mkdir -p $GAME_DATA/base/gl2progs
+cp -r gl2progs/* $GAME_DATA/base/gl2progs/
+
 cd $GAME_DATA/base
 
 if [ ! -f $GAME_DATA/base/DoomConfig.cfg ]; then
@@ -80,14 +83,6 @@ if [ ! -f $GAME_DATA/base/DoomConfig.cfg ]; then
 	cp DoomConfig.cfg ../d3xp/.
 	cp DoomConfig.cfg ../demo/.
 	echo "Installed it in ~/.doom3/base, ~/.doom3/d3xp and ~/.doom3/demo"
-fi
-
-if [ ! -d $GAME_DATA/base/gl2progs ]; then
-	echo "Install shaders in ~/.doom3/base/gl2progs"
-	git clone --quiet --depth 1 $SHADER_URL
-else
-	cd $GAME_DATA/base/gl2progs
-	git pull
 fi
 
 echo -e "\nExecutable (doom.arm) is now available in "$CUR_DIR"\nYou should now copy your *.pk4 files to "$GAME_DATA"/base, "$GAME_DATA"/d3xp or "$GAME_DATA"/demo\n"
