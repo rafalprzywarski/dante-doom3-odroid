@@ -30,6 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "local.h"
 
 #include <pthread.h>
+#include <termios.h>
 
 idCVar in_mouse("in_mouse", "1", CVAR_SYSTEM | CVAR_ARCHIVE, "");
 idCVar in_dgamouse("in_dgamouse", "1", CVAR_SYSTEM | CVAR_ARCHIVE, "");
@@ -83,6 +84,44 @@ void IN_Clear_f(const idCmdArgs &args)
 	idKeyInput::ClearStates();
 }
 
+static int kbhit( void )
+{
+	struct timeval tv;
+	fd_set fds;
+	tv.tv_sec = 0;
+	tv.tv_usec = 0;
+	FD_ZERO(&fds);
+	FD_SET(STDIN_FILENO, &fds); //STDIN_FILENO is 0
+	select(STDIN_FILENO+1, &fds, NULL, NULL, &tv);
+	return FD_ISSET(STDIN_FILENO, &fds);
+}
+
+#define NB_DISABLE 	0
+#define NB_ENABLE	1
+
+static void nonblock(int state)
+{
+	struct termios ttystate;
+
+	//get the terminal state
+	tcgetattr(STDIN_FILENO, &ttystate);
+
+	if (state==NB_ENABLE)
+	{
+		//turn off canonical mode
+		ttystate.c_lflag &= ~ICANON;
+		//minimum of number input read.
+		ttystate.c_cc[VMIN] = 1;
+	}
+	else if (state==NB_DISABLE)
+	{
+		//turn on canonical mode
+		ttystate.c_lflag |= ICANON;
+	}
+	//set the terminal attributes.
+	tcsetattr(STDIN_FILENO, TCSANOW, &ttystate);
+}
+
 /*
 =================
 Sys_InitInput
@@ -90,266 +129,27 @@ Sys_InitInput
 */
 void Sys_InitInput(void)
 {
-	int major_in_out, minor_in_out, opcode_rtrn, event_rtrn, error_rtrn;
-	bool ret;
-
 	common->Printf("\n------- Input Initialization -------\n");
-	assert(dpy);
 	cmdSystem->AddCommand("in_clear", IN_Clear_f, CMD_FL_SYSTEM, "reset the input keys");
-	major_in_out = XkbMajorVersion;
-	minor_in_out = XkbMinorVersion;
-	ret = XkbLibraryVersion(&major_in_out, &minor_in_out);
-	common->Printf("XKB extension: compile time 0x%x:0x%x, runtime 0x%x:0x%x: %s\n", XkbMajorVersion, XkbMinorVersion, major_in_out, minor_in_out, ret ? "OK" : "Not compatible");
-
-	if (ret) {
-		ret = XkbQueryExtension(dpy, &opcode_rtrn, &event_rtrn, &error_rtrn, &major_in_out, &minor_in_out);
-
-		if (ret) {
-			common->Printf("XKB extension present on server ( 0x%x:0x%x )\n", major_in_out, minor_in_out);
-			have_xkb = true;
-		} else {
-			common->Printf("XKB extension not present on server\n");
-			have_xkb = false;
-		}
-	} else {
-		have_xkb = false;
-	}
-
-	common->Printf("------------------------------------\n");
+  nonblock(NB_ENABLE);
 }
 
 //#define XEVT_DBG
 //#define XEVT_DBG2
 
-static Cursor Sys_XCreateNullCursor(Display *display, Window root)
+void Sys_GrabMouseCursor(bool)
 {
-	Pixmap cursormask;
-	XGCValues xgc;
-	GC gc;
-	XColor dummycolour;
-	Cursor cursor;
-
-	cursormask = XCreatePixmap(display, root, 1, 1, 1/*depth*/);
-	xgc.function = GXclear;
-	gc =  XCreateGC(display, cursormask, GCFunction, &xgc);
-	XFillRectangle(display, cursormask, gc, 0, 0, 1, 1);
-	dummycolour.pixel = 0;
-	dummycolour.red = 0;
-	dummycolour.flags = 04;
-	cursor = XCreatePixmapCursor(display, cursormask, cursormask,
-	                             &dummycolour,&dummycolour, 0,0);
-	XFreePixmap(display,cursormask);
-	XFreeGC(display,gc);
-	return cursor;
-}
-
-static void Sys_XInstallGrabs(void)
-{
-	assert(dpy);
-
-	XWarpPointer(dpy, None, win,
-	             0, 0, 0, 0,
-	             glConfig.vidWidth / 2, glConfig.vidHeight / 2);
-
-	XSync(dpy, False);
-
-	XDefineCursor(dpy, win, Sys_XCreateNullCursor(dpy, win));
-
-	XGrabPointer(dpy, win,
-	             False,
-	             MOUSE_MASK,
-	             GrabModeAsync, GrabModeAsync,
-	             win,
-	             None,
-	             CurrentTime);
-
-	XGetPointerControl(dpy, &mouse_accel_numerator, &mouse_accel_denominator,
-	                   &mouse_threshold);
-
-	XChangePointerControl(dpy, True, True, 1, 1, 0);
-
-	XSync(dpy, False);
-
-	mouse_reset_time = Sys_Milliseconds();
-
-#if defined( ID_ENABLE_DGA )
-	if (in_dgamouse.GetBool() && !dga_found)
-#endif
-	{
-		common->Printf("XF86DGA not available, forcing DGA mouse off\n");
-		in_dgamouse.SetBool(false);
-	}
-
-	if (in_dgamouse.GetBool()) {
-#if defined( ID_ENABLE_DGA )
-		XF86DGADirectVideo(dpy, DefaultScreen(dpy), XF86DGADirectMouse);
-		XWarpPointer(dpy, None, win, 0, 0, 0, 0, 0, 0);
-#endif
-	} else {
-		mwx = glConfig.vidWidth / 2;
-		mwy = glConfig.vidHeight / 2;
-		mx = my = 0;
-	}
-
-	XGrabKeyboard(dpy, win,
-	              False,
-	              GrabModeAsync, GrabModeAsync,
-	              CurrentTime);
-
-	XSync(dpy, False);
-
-	mouse_active = true;
-}
-
-void Sys_XUninstallGrabs(void)
-{
-	assert(dpy);
-
-#if defined( ID_ENABLE_DGA )
-
-	if (in_dgamouse.GetBool()) {
-		common->DPrintf("DGA Mouse - Disabling DGA DirectVideo\n");
-		XF86DGADirectVideo(dpy, DefaultScreen(dpy), 0);
-	}
-
-#endif
-
-	XChangePointerControl(dpy, true, true, mouse_accel_numerator,
-	                      mouse_accel_denominator, mouse_threshold);
-
-	XUngrabPointer(dpy, CurrentTime);
-	XUngrabKeyboard(dpy, CurrentTime);
-
-	XWarpPointer(dpy, None, win,
-	             0, 0, 0, 0,
-	             glConfig.vidWidth / 2, glConfig.vidHeight / 2);
-
-	XUndefineCursor(dpy, win);
-
-	mouse_active = false;
-}
-
-void Sys_GrabMouseCursor(bool grabIt)
-{
-
-#if defined( ID_DEDICATED )
-	return;
-#endif
-
-	if (!dpy) {
-#ifdef XEVT_DBG
-		common->DPrintf("Sys_GrabMouseCursor: !dpy\n");
-#endif
-		return;
-	}
-
-	if (glConfig.isFullscreen) {
-		if (!grabIt) {
-			return; // never ungrab while fullscreen
-		}
-
-		if (in_nograb.GetBool()) {
-			common->DPrintf("forcing in_nograb 0 while running fullscreen\n");
-			in_nograb.SetBool(false);
-		}
-	}
-
-	if (in_nograb.GetBool()) {
-		if (in_dgamouse.GetBool()) {
-			common->DPrintf("in_nograb 1, forcing forcing DGA mouse off\n");
-			in_dgamouse.SetBool(false);
-		}
-
-		if (grabIt) {
-			mouse_active = true;
-		} else {
-			mouse_active = false;
-		}
-
-		return;
-	}
-
-	if (grabIt && !mouse_active) {
-		Sys_XInstallGrabs();
-	} else if (!grabIt && mouse_active) {
-		Sys_XUninstallGrabs();
-	}
-}
-
-/**
- * XPending() actually performs a blocking read
- *  if no events available. From Fakk2, by way of
- *  Heretic2, by way of SDL, original idea GGI project.
- * The benefit of this approach over the quite
- *  badly behaved XAutoRepeatOn/Off is that you get
- *  focus handling for free, which is a major win
- *  with debug and windowed mode. It rests on the
- *  assumption that the X server will use the
- *  same timestamp on press/release event pairs
- *  for key repeats.
- */
-static bool Sys_XPendingInput(void)
-{
-	// Flush the display connection
-	//  and look to see if events are queued
-	XFlush(dpy);
-
-	if (XEventsQueued(dpy, QueuedAlready)) {
-		return true;
-	}
-
-	// More drastic measures are required -- see if X is ready to talk
-	static struct timeval zero_time;
-	int x11_fd;
-	fd_set fdset;
-
-	x11_fd = ConnectionNumber(dpy);
-	FD_ZERO(&fdset);
-	FD_SET(x11_fd, &fdset);
-
-	if (select(x11_fd+1, &fdset, NULL, NULL, &zero_time) == 1) {
-		return XPending(dpy);
-	}
-
-	// Oh well, nothing is ready ..
-	return false;
 }
 
 /**
  * Intercept a KeyRelease-KeyPress sequence and ignore
  */
-static bool Sys_XRepeatPress(XEvent *event)
-{
-	XEvent	peekevent;
-	bool	repeated = false;
-	int		lookupRet;
-	char	buf[5];
-	KeySym	keysym;
 
-	if (Sys_XPendingInput()) {
-		XPeekEvent(dpy, &peekevent);
-
-		if ((peekevent.type == KeyPress) &&
-		    (peekevent.xkey.keycode == event->xkey.keycode) &&
-		    (peekevent.xkey.time == event->xkey.time)) {
-			repeated = true;
-			XNextEvent(dpy, &peekevent);
-			// emit an SE_CHAR for the repeat
-			lookupRet = XLookupString((XKeyEvent *)&peekevent, buf, sizeof(buf), &keysym, NULL);
-
-			if (lookupRet > 0) {
-				Posix_QueEvent(SE_CHAR, buf[ 0 ], 0, 0, NULL);
-			} else {
+				//Posix_QueEvent(SE_CHAR, buf[ 0 ], 0, 0, NULL);
 				// shouldn't we be doing a release/press in this order rather?
 				// ( doesn't work .. but that's what I would have expected to do though )
-				Posix_QueEvent(SE_KEY, s_scantokey[peekevent.xkey.keycode], true, 0, NULL);
-				Posix_QueEvent(SE_KEY, s_scantokey[peekevent.xkey.keycode], false, 0, NULL);
-			}
-		}
-	}
-
-	return repeated;
-}
+				//Posix_QueEvent(SE_KEY, s_scantokey[peekevent.xkey.keycode], true, 0, NULL);
+				//Posix_QueEvent(SE_KEY, s_scantokey[peekevent.xkey.keycode], false, 0, NULL);
 
 /*
 ==========================
@@ -358,6 +158,7 @@ Posix_PollInput
 */
 void Posix_PollInput()
 {
+  /*
 	static char buf[16];
 	static XEvent event;
 	static XKeyEvent *key_event = (XKeyEvent *)&event;
@@ -554,7 +355,7 @@ void Posix_PollInput()
 
 				break;
 		}
-	}
+	}*/
 }
 
 /*
@@ -571,52 +372,5 @@ Sys_MapCharForKey
 */
 unsigned char Sys_MapCharForKey(int _key)
 {
-	int			key;	// scan key ( != doom key )
-	XkbStateRec kbd_state;
-	XEvent		event;
-	KeySym		keysym;
-	int			lookupRet;
-	char		buf[5];
-
-	if (!have_xkb || !dpy) {
-		return (unsigned char)_key;
-	}
-
-	// query the current keyboard group, must be passed as bit 13-14 in the constructed XEvent
-	// see X Keyboard Extension library specifications
-	XkbGetState(dpy, XkbUseCoreKbd, &kbd_state);
-
-	// lookup scancode from doom key code. unique hits
-	for (key = 0; key < 128; key++) {
-		if (_key == s_scantokey[ key ]) {
-			break;
-		}
-	}
-
-	if (key == 128) {
-		// it happens. these, we can't convert
-		common->DPrintf("Sys_MapCharForKey: doom key %d -> keycode failed\n", _key);
-		return (unsigned char)_key;
-	}
-
-	memset(&event, 0, sizeof(XEvent));
-	event.xkey.type = KeyPress;
-	event.xkey.display = dpy;
-	event.xkey.time = CurrentTime;
-	event.xkey.keycode = key;
-	event.xkey.state = kbd_state.group << 13;
-
-	lookupRet = XLookupString((XKeyEvent *)&event, buf, sizeof(buf), &keysym, NULL);
-
-	if (lookupRet <= 0) {
-		Sys_Printf("Sys_MapCharForKey: XLookupString key 0x%x failed\n", key);
-		return (unsigned char)_key;
-	}
-
-	if (lookupRet > 1) {
-		// only ever expecting 1 char..
-		Sys_Printf("Sys_MapCharForKey: XLookupString returned '%s'\n", buf);
-	}
-
-	return buf[ 0 ];
+	return (unsigned char)_key;
 }

@@ -33,13 +33,9 @@ If you have questions concerning this license or the applicable additional terms
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <bcm_host.h>
 
 idCVar sys_videoRam("sys_videoRam", "0", CVAR_SYSTEM | CVAR_ARCHIVE | CVAR_INTEGER, "Texture memory on the video card (in megabytes) - 0: autodetect", 0, 512);
-
-Display *dpy = NULL;
-static int scrnum = 0;
-
-Window win = 0;
 
 static EGLDisplay eglDisplay = EGL_NO_DISPLAY;
 static EGLContext eglContext = EGL_NO_CONTEXT;
@@ -126,30 +122,13 @@ void GLimp_SetGamma(float b, float g)
 
 void GLimp_Shutdown()
 {
-	if (dpy) {
+	eglDestroyContext(eglDisplay, eglContext);
+	eglDestroySurface(eglDisplay, eglSurface);
+	eglTerminate(eglDisplay);
 
-		Sys_XUninstallGrabs();
-
-		GLimp_RestoreGamma();
-
-		eglDestroyContext(eglDisplay, eglContext);
-		eglDestroySurface(eglDisplay, eglSurface);
-		eglTerminate(eglDisplay);
-
-		XDestroyWindow(dpy, win);
-
-		XFlush(dpy);
-
-		// FIXME: that's going to crash
-		//XCloseDisplay( dpy );
-
-		dpy = NULL;
-		win = 0;
-
-		eglDisplay = EGL_NO_DISPLAY;
-		eglContext = EGL_NO_CONTEXT;
-		eglSurface = EGL_NO_SURFACE;
-	}
+	eglDisplay = EGL_NO_DISPLAY;
+	eglContext = EGL_NO_CONTEXT;
+	eglSurface = EGL_NO_SURFACE;
 }
 
 void GLimp_SwapBuffers()
@@ -158,28 +137,10 @@ void GLimp_SwapBuffers()
 	eglSwapBuffers(eglDisplay, eglSurface);
 }
 
-/*
-** XErrorHandler
-**   the default X error handler exits the application
-**   I found out that on some hosts some operations would raise X errors (GLXUnsupportedPrivateRequest)
-**   but those don't seem to be fatal .. so the default would be to just ignore them
-**   our implementation mimics the default handler behaviour (not completely cause I'm lazy)
-*/
-int idXErrorHandler(Display *l_dpy, XErrorEvent *ev)
-{
-	char buf[1024];
-	common->Printf("Fatal X Error:\n");
-	common->Printf("  Major opcode of failed request: %d\n", ev->request_code);
-	common->Printf("  Minor opcode of failed request: %d\n", ev->minor_code);
-	common->Printf("  Serial number of failed request: %lu\n", ev->serial);
-	XGetErrorText(l_dpy, ev->error_code, buf, 1024);
-	common->Printf("%s\n", buf);
-	return 0;
-}
-
 bool GLimp_OpenDisplay(void)
 {
-	if (dpy) {
+  bcm_host_init();
+	if (eglSurface != EGL_NO_SURFACE) {
 		return true;
 	}
 
@@ -188,25 +149,7 @@ bool GLimp_OpenDisplay(void)
 		return false;
 	}
 
-	common->Printf("Setup X display connection\n");
-
-	// that should be the first call into X
-	if (!XInitThreads()) {
-		common->Printf("XInitThreads failed\n");
-		return false;
-	}
-
-	// set up our custom error handler for X failures
-	XSetErrorHandler(&idXErrorHandler);
-
-	if (!(dpy = XOpenDisplay(NULL))) {
-		common->Printf("Couldn't open the X display\n");
-		return false;
-	}
-
-	scrnum = DefaultScreen(dpy);
-
-	if (!(eglDisplay = eglGetDisplay((EGLNativeDisplayType) dpy))) {
+	if (!(eglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY))) {
 		common->Printf("Couldn't open the EGL display\n");
 		return false;
 	}
@@ -229,6 +172,8 @@ GLX_Init
 
 int GLX_Init(glimpParms_t a)
 {
+  bcm_host_init();
+
 	EGLint attrib[] = {
 		EGL_RED_SIZE, 8,	//  1,  2
 		EGL_GREEN_SIZE, 8,	//  3,  4
@@ -248,13 +193,9 @@ int GLX_Init(glimpParms_t a)
 #define ATTR_DEPTH_IDX	9
 #define ATTR_STENCIL_IDX	11
 #define ATTR_BUFFER_SIZE_IDX	13
-	Window root;
-	XVisualInfo *visinfo;
-	XSetWindowAttributes attr;
-	XSizeHints sizehints;
 	int colorbits, depthbits, stencilbits;
 	int tcolorbits, tdepthbits, tstencilbits;
-	int actualWidth, actualHeight;
+	uint32_t actualWidth, actualHeight;
 	int i;
 	const char *glstring;
 
@@ -264,21 +205,12 @@ int GLX_Init(glimpParms_t a)
 
 	common->Printf("Initializing OpenGL display\n");
 
-	root = RootWindow(dpy, scrnum);
-    
-	glConfig.isFullscreen = a.fullScreen;
+	glConfig.isFullscreen = true;
 
-	if (glConfig.isFullscreen)
-	{
-		int screen_num = DefaultScreen(dpy);
-		actualWidth = glConfig.vidWidth = DisplayWidth(dpy, screen_num);
-		actualHeight = glConfig.vidHeight = DisplayHeight(dpy, screen_num);
-	}
-	else
-	{
-		actualWidth = glConfig.vidWidth;
-		actualHeight = glConfig.vidHeight;
-	}	
+  graphics_get_display_size(0, &actualWidth, &actualHeight);
+	glConfig.vidWidth = actualWidth;
+	glConfig.vidHeight = actualHeight;
+
 	// color, depth and stencil
 	colorbits = 24;
 	depthbits = 24;
@@ -377,41 +309,7 @@ int GLX_Init(glimpParms_t a)
 		return false;
 	}
 
-	visinfo = (XVisualInfo*)malloc(sizeof(XVisualInfo));
-	if (!(XMatchVisualInfo(dpy, scrnum, 32, TrueColor, visinfo))) {
-		common->Printf("Couldn't get a visual\n");
-		return false;
-	}
-
-	// window attributes
-	attr.background_pixel = BlackPixel(dpy, scrnum);
-	attr.border_pixel = 0;
-	attr.colormap = XCreateColormap(dpy, root, visinfo->visual, AllocNone);
-	attr.event_mask = X_MASK;
-
-	win = XCreateWindow(dpy, root, 0, 0,
-			    actualWidth, actualHeight,
-			    0, visinfo->depth, InputOutput,
-			    visinfo->visual,
-			    CWBackPixel | CWBorderPixel | CWColormap | CWEventMask,
-			    &attr);
-
-	XStoreName(dpy, win, GAME_NAME);
-
-	// don't let the window be resized
-	// FIXME: allow resize (win32 does)
-	sizehints.flags = PMinSize | PMaxSize;
-	sizehints.min_width = sizehints.max_width = actualWidth;
-	sizehints.min_height = sizehints.max_height = actualHeight;
-
-	XSetWMNormalHints(dpy, win, &sizehints);
-
-	XMapWindow(dpy, win);
-
-	// Free the visinfo after we're done with it
-	XFree(visinfo);
-
-	eglSurface = eglCreateWindowSurface(eglDisplay, eglConfig, win, NULL);
+	eglSurface = eglCreateWindowSurface(eglDisplay, eglConfig, NULL, NULL); // native_window null?
 	if (eglSurface == EGL_NO_SURFACE) {
 		common->Printf("Couldn't get a EGL surface\n");
 		return false;
@@ -444,25 +342,8 @@ int GLX_Init(glimpParms_t a)
 	common->Printf("GL_EXTENSIONS: %s\n", glstring);
 
 	// FIXME: here, software GL test
-	
-	if (glConfig.isFullscreen) {
-		Sys_GrabMouseCursor(true);
 
-		XEvent xev;
-		Atom wm_state = XInternAtom(dpy, "_NET_WM_STATE", False);
-		Atom fullscreen = XInternAtom(dpy, "_NET_WM_STATE_FULLSCREEN", False);
-		memset(&xev, 0, sizeof(xev));
-		xev.type = ClientMessage;
-		xev.xclient.window = win;
-		xev.xclient.message_type = wm_state;
-		xev.xclient.format = 32;
-		xev.xclient.data.l[0] = 1;
-		xev.xclient.data.l[1] = fullscreen;
-		xev.xclient.data.l[2] = 0;
-		XMapWindow(dpy, win);
-		XSendEvent(dpy, DefaultRootWindow(dpy), False, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
-		XFlush(dpy);		
-	}
+	Sys_GrabMouseCursor(true);
 
 	return true;
 }
@@ -516,69 +397,5 @@ using the one shared with GLimp_Init is not stable
 */
 int Sys_GetVideoRam(void)
 {
-	static int run_once = 0;
-	int major, minor, value;
-	Display *l_dpy;
-	int l_scrnum;
-
-	if (run_once) {
-		return run_once;
-	}
-
-	if (sys_videoRam.GetInteger()) {
-		run_once = sys_videoRam.GetInteger();
-		return sys_videoRam.GetInteger();
-	}
-
-	// try a few strategies to guess the amount of video ram
-	common->Printf("guessing video ram ( use +set sys_videoRam to force ) ..\n");
-
-	if (!GLimp_OpenDisplay()) {
-		run_once = 64;
-		return run_once;
-	}
-
-	l_dpy = dpy;
-	l_scrnum = scrnum;
-
-	// try ATI /proc read ( for the lack of a better option )
-	int fd;
-
-	if ((fd = open("/proc/dri/0/umm", O_RDONLY)) != -1) {
-		int len;
-		char umm_buf[ 1024 ];
-		char *line;
-
-		if ((len = read(fd, umm_buf, 1024)) != -1) {
-			// should be way enough to get the full file
-			// grab "free  LFB = " line and "free  Inv = " lines
-			umm_buf[ len-1 ] = '\0';
-			line = umm_buf;
-			line = strtok(umm_buf, "\n");
-			int total = 0;
-
-			while (line) {
-				if (strlen(line) >= 13 && strstr(line, "max   LFB =") == line) {
-					total += atoi(line + 12);
-				} else if (strlen(line) >= 13 && strstr(line, "max   Inv =") == line) {
-					total += atoi(line + 12);
-				}
-
-				line = strtok(NULL, "\n");
-			}
-
-			if (total) {
-				run_once = total / 1048576;
-				// round to the lower 16Mb
-				run_once &= ~15;
-				return run_once;
-			}
-		} else {
-			common->Printf("read /proc/dri/0/umm failed: %s\n", strerror(errno));
-		}
-	}
-
-	common->Printf("guess failed, return default low-end VRAM setting ( 64MB VRAM )\n");
-	run_once = 64;
-	return run_once;
+	return 256;
 }
