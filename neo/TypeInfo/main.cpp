@@ -122,7 +122,7 @@ class idCommonLocal : public idCommon
 		}
 };
 
-idCVar com_developer("developer", "0", CVAR_BOOL|CVAR_SYSTEM, "developer mode");
+idCVar com_developer("developer", "1", CVAR_BOOL|CVAR_SYSTEM, "developer mode");
 
 idCommonLocal		commonLocal;
 idCommon 			*common = &commonLocal;
