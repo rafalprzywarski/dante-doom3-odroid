@@ -78,32 +78,3 @@ cp config/DoomConfig.cfg $GAME_DATA/demo/
 echo "Installed DoomConfig.cfg in ~/.doom3/base, ~/.doom3/d3xp and ~/.doom3/demo"
 
 echo -e "\nExecutable (doom.arm) is now available in "$CUR_DIR"\nYou should now copy your *.pk4 files to "$GAME_DATA"/base, "$GAME_DATA"/d3xp or "$GAME_DATA"/demo\n"
-exit
-
-cd $GAME_DATA/base
-
-read -p "Do you wish to install and create desktop menu ? " -n 1 -r
-echo
-if [[ ! $REPLY =~ ^[Yy]$ ]]
-then
-    exit 1
-fi
-
-cd /usr/local/share/pixmaps
-su -c "wget --quiet -N https://github.com/AreaScout/dante-doom3-odroid/raw/gh-pages/images/doom_3.png | cp $CUR_DIR/doom.arm /usr/local/bin/. | cat <<EOM >$LINK_PATH
-[Desktop Entry]
-Name=Doom3
-Version=1.3
-Exec=doom.arm
-Comment=Doom3
-Icon=doom_3
-Type=Application
-Terminal=false
-StartupNotify=true
-Encoding=UTF-8
-Categories=Game;ActionGame;
-EOM"
-
-echo -e "\nFinish, have fun !"
-
-exit
