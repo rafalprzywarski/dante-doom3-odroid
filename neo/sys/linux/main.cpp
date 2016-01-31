@@ -38,6 +38,7 @@ If you have questions concerning this license or the applicable additional terms
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <bcm_host.h>
 
 #ifdef ID_MCHECK
 #include <mcheck.h>
@@ -827,6 +828,7 @@ main
 */
 int main(int argc, const char **argv)
 {
+    bcm_host_init();
 #ifdef ID_MCHECK
 	// must have -lmcheck linkage
 	mcheck(abrt_func);

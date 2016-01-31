@@ -27,6 +27,7 @@ If you have questions concerning this license or the applicable additional terms
 */
 #include "../../idlib/precompiled.h"
 #include "posix_public.h"
+#include <SDL/SDL.h>
 
 #include <string.h>
 #include <errno.h>
@@ -42,6 +43,7 @@ const int siglist[] = {
 	SIGSEGV,
 	SIGPIPE,
 	SIGABRT,
+    SIGTERM,
 	//	SIGTTIN,
 	//	SIGTTOU,
 	-1
@@ -58,6 +60,7 @@ const char *signames[] = {
 	"SIGSEGV",
 	"SIGPIPE",
 	"SIGABRT",
+    "SIGTERM",
 	//	"SIGTTIN",
 	//	"SIGTTOUT"
 };
@@ -105,6 +108,8 @@ static void sig_handler(int signum, siginfo_t *info, void *context)
 	}
 
 	double_fault = true;
+
+    SDL_QuitSubSystem(SDL_INIT_VIDEO);
 
 	// NOTE: see sigaction man page, could verbose the whole siginfo_t and print human readable si_code
 	Sys_Printf("signal caught: %s\nsi_code %d\n", strsignal(signum), info->si_code);

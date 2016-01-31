@@ -33,6 +33,7 @@ If you have questions concerning this license or the applicable additional terms
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <SDL/SDL.h>
 #include <bcm_host.h>
 
 idCVar sys_videoRam("sys_videoRam", "0", CVAR_SYSTEM | CVAR_ARCHIVE | CVAR_INTEGER, "Texture memory on the video card (in megabytes) - 0: autodetect", 0, 512);
@@ -129,6 +130,8 @@ void GLimp_Shutdown()
 	eglDisplay = EGL_NO_DISPLAY;
 	eglContext = EGL_NO_CONTEXT;
 	eglSurface = EGL_NO_SURFACE;
+
+    SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
 
 void GLimp_SwapBuffers()
@@ -139,7 +142,6 @@ void GLimp_SwapBuffers()
 
 bool GLimp_OpenDisplay(void)
 {
-  bcm_host_init();
 	if (eglSurface != EGL_NO_SURFACE) {
 		return true;
 	}
@@ -148,6 +150,11 @@ bool GLimp_OpenDisplay(void)
 		common->DPrintf("not opening the display: dedicated server\n");
 		return false;
 	}
+
+    if (!SDL_SetVideoMode(32, 32, 0, 0)) {
+         common->Printf("SDL_SetVideoMode() failed (%s)\n", SDL_GetError());
+         return false;
+      }
 
 	if (!(eglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY))) {
 		common->Printf("Couldn't open the EGL display\n");
@@ -172,8 +179,6 @@ GLX_Init
 
 int GLX_Init(glimpParms_t a)
 {
-  bcm_host_init();
-
 	EGLint attrib[] = {
 		EGL_RED_SIZE, 8,	//  1,  2
 		EGL_GREEN_SIZE, 8,	//  3,  4
