@@ -30,6 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "tr_local.h"
+#include "../sys/sys_prof.h"
 
 /*
 
@@ -462,6 +463,7 @@ overbright past 1.0
 */
 void RB_DetermineLightScale(void)
 {
+    SCOPED_TIMER("RB_DetermineLightScale");
 	viewLight_t			*vLight;
 	const idMaterial	*shader;
 	float				max;
@@ -522,6 +524,7 @@ to actually render the visible surfaces for this view
 */
 void RB_BeginDrawingView(void)
 {
+    SCOPED_TIMER("RB_BeginDrawingView");
 	// set the window clipping
 	glViewport(tr.viewportOffset[0] + backEnd.viewDef->viewport.x1,
 	            tr.viewportOffset[1] + backEnd.viewDef->viewport.y1,
@@ -659,6 +662,7 @@ interaction into primitive interactions
 */
 void RB_CreateSingleDrawInteractions(const drawSurf_t *surf, void (*DrawInteraction)(const drawInteraction_t *))
 {
+    SCOPED_TIMER("RB_CreateSingleDrawInteractions");
 	const idMaterial	*surfaceShader = surf->material;
 	const float			*surfaceRegs = surf->shaderRegisters;
 	const viewLight_t	*vLight = backEnd.vLight;
@@ -834,6 +838,7 @@ RB_DrawView
 */
 void RB_DrawView(const void *data)
 {
+    SCOPED_TIMER("RB_DrawView");
 	const drawSurfsCommand_t	*cmd;
 
 	cmd = (const drawSurfsCommand_t *)data;
@@ -859,6 +864,7 @@ void RB_DrawView(const void *data)
 	// which should factor out the API cost, under the assumption
 	// that all gl calls just return if the context isn't valid
 	if (r_skipRenderContext.GetBool() && backEnd.viewDef->viewEntitys) {
+        SCOPED_TIMER("GLimp_DeactivateContext");
 		GLimp_DeactivateContext();
 	}
 
@@ -871,6 +877,7 @@ void RB_DrawView(const void *data)
 
 	// restore the context for 2D drawing if we were stubbing it out
 	if (r_skipRenderContext.GetBool() && backEnd.viewDef->viewEntitys) {
+        SCOPED_TIMER("GLimp_ActivateContext && RB_SetDefaultGLState");
 		GLimp_ActivateContext();
 		RB_SetDefaultGLState();
 	}

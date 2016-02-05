@@ -29,6 +29,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "../idlib/precompiled.h"
 #pragma hdrstop
 
+#include "../sys/sys_prof.h"
 #include "tr_local.h"
 #ifdef __ppc__
 #include <vecLib/vecLib.h>
@@ -731,6 +732,7 @@ Returns true if the box is outside the given global frustum, (positive sides are
 */
 bool R_CullLocalBox(const idBounds &bounds, const float modelMatrix[16], int numPlanes, const idPlane *planes)
 {
+    SCOPED_TIMER("R_CullLocalBox");
 	if (R_RadiusCullLocalBox(bounds, modelMatrix, numPlanes, planes)) {
 		return true;
 	}
@@ -1126,6 +1128,7 @@ R_SortDrawSurfs
 */
 static void R_SortDrawSurfs(void)
 {
+    SCOPED_TIMER("R_SortDrawSurfs");
 	// sort the drawsurfs by sort type, then orientation, then shader
 	qsort(tr.viewDef->drawSurfs, tr.viewDef->numDrawSurfs, sizeof(tr.viewDef->drawSurfs[0]),
 	      R_QsortSurfaces);
@@ -1152,6 +1155,7 @@ Parms will typically be allocated with R_FrameAlloc
 */
 void R_RenderView(viewDef_t *parms)
 {
+    SCOPED_TIMER("R_RenderView");
 	viewDef_t		*oldView;
 
 	if (parms->renderView.width <= 0 || parms->renderView.height <= 0) {

@@ -30,6 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "Session_local.h"
+#include "../sys/sys_prof.h"
 
 idCVar	idSessionLocal::com_showAngles("com_showAngles", "0", CVAR_SYSTEM | CVAR_BOOL, "");
 idCVar	idSessionLocal::com_minTics("com_minTics", "1", CVAR_SYSTEM, "");
@@ -2547,6 +2548,7 @@ idSessionLocal::Draw
 */
 void idSessionLocal::Draw()
 {
+    SCOPED_TIMER("idSessionLocal::Draw");
 	bool fullConsole = false;
 
 	if (insideExecuteMapChange) {
@@ -2581,6 +2583,7 @@ void idSessionLocal::Draw()
 		rw->RenderScene(&currentDemoRenderView);
 		renderSystem->DrawDemoPics();
 	} else if (mapSpawned) {
+        SCOPED_TIMER("mapSpawned");
 		bool gameDraw = false;
 
 		// normal drawing for both single and multi player
@@ -2657,7 +2660,7 @@ idSessionLocal::UpdateScreen
 */
 void idSessionLocal::UpdateScreen(bool outOfSequence)
 {
-
+    SCOPED_TIMER("idSessionLocal::UpdateScreen");
 #ifdef _WIN32
 
 	if (com_editors) {

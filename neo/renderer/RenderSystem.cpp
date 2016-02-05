@@ -29,6 +29,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "tr_local.h"
+#include "../sys/sys_prof.h"
 
 idRenderSystemLocal	tr;
 idRenderSystem	*renderSystem = &tr;
@@ -133,6 +134,7 @@ Called by R_EndFrame each frame
 */
 static void R_IssueRenderCommands(void)
 {
+    SCOPED_TIMER("R_IssueRenderCommands");
 	if (frameData->cmdHead->commandId == RC_NOP
 	    && !frameData->cmdHead->next) {
 		// nothing to issue
@@ -616,6 +618,7 @@ BeginFrame
 */
 void idRenderSystemLocal::BeginFrame(int windowWidth, int windowHeight)
 {
+    SCOPED_TIMER("idRenderSystemLocal::BeginFrame");
 	setBufferCommand_t	*cmd;
 
 	if (!glConfig.isInitialized) {
@@ -700,6 +703,7 @@ Returns the number of msec spent in the back end
 */
 void idRenderSystemLocal::EndFrame(int *frontEndMsec, int *backEndMsec)
 {
+    SCOPED_TIMER("idRenderSystemLocal::EndFrame");
 	emptyCommand_t *cmd;
 
 	if (!glConfig.isInitialized) {

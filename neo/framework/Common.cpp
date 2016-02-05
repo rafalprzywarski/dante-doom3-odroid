@@ -30,6 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "../renderer/Image.h"
+#include "../sys/sys_prof.h"
 
 #define	MAX_PRINT_MSG_SIZE	4096
 #define MAX_WARNING_LIST	256
@@ -2621,7 +2622,10 @@ idCommonLocal::Frame
 */
 void idCommonLocal::Frame(void)
 {
+    {
+    SCOPED_TIMER("idCommonLocal::Frame");
 	try {
+        SCOPED_TIMER("idCommonLocal::Frame try");
 
 		// pump all the events
 		Sys_GenerateEvents();
@@ -2641,11 +2645,13 @@ void idCommonLocal::Frame(void)
 		idAsyncNetwork::RunFrame();
 
 		if (idAsyncNetwork::IsActive()) {
+            SCOPED_TIMER("idAsyncNetwork::IsActive");
 			if (idAsyncNetwork::serverDedicated.GetInteger() != 1) {
 				session->GuiFrameEvents();
 				session->UpdateScreen(false);
 			}
 		} else {
+            SCOPED_TIMER("not idAsyncNetwork::IsActive");
 			session->Frame();
 
 			// normal, in-sequence screen update
@@ -2675,9 +2681,13 @@ void idCommonLocal::Frame(void)
 		}
 	}
 
-	catch (idException &) {
+	catch (idException &e) {
+        common->Printf("EXCEPTION: %s\n", e.error);
+        DumpProfMeas();
 		return;			// an ERP_DROP was thrown
 	}
+    }
+    DumpProfMeas();
 }
 
 /*

@@ -243,6 +243,7 @@ ui_string = ' \
 ui_list = scons_utils.BuildList( 'ui', ui_string )
 
 sys_string = ' \
+    posix/sys_prof.cpp \
 	sys_local.cpp \
 	posix/posix_net.cpp \
 	posix/posix_main.cpp \

@@ -30,6 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "tr_local.h"
+#include "../sys/sys_prof.h"
 
 #if !defined(GL_ES_VERSION_2_0)
 #define glBindBuffer	glBindBufferARB
@@ -44,7 +45,7 @@ static const int	EXPAND_HEADERS = 1024;
 
 idCVar idVertexCache::r_showVertexCache("r_showVertexCache", "0", CVAR_INTEGER|CVAR_RENDERER, "");
 idCVar idVertexCache::r_vertexBufferMegs("r_vertexBufferMegs", "32", CVAR_INTEGER|CVAR_RENDERER, "");
-
+idCVar r_showVertexAllocs("r_showVertexAllocs", "0", CVAR_BOOL|CVAR_SYSTEM|CVAR_NOCHEAT, "");
 idVertexCache		vertexCache;
 
 /*
@@ -234,6 +235,7 @@ idVertexCache::Alloc
 */
 void idVertexCache::Alloc(void *data, int size, vertCache_t **buffer, bool indexBuffer)
 {
+    SCOPED_TIMER("idVertexCache::Alloc");
 	vertCache_t	*block;
 
 	if (size <= 0) {
@@ -289,19 +291,24 @@ void idVertexCache::Alloc(void *data, int size, vertCache_t **buffer, bool index
 
 	// copy the data
 	if (block->vbo) {
+        if (r_showVertexAllocs.GetBool())
+            common->Printf("idVertexCache::Alloc %s%s(%u) %u bytes\n", allocatingTempBuffer ? "temp " : "", indexBuffer ? "IBO" : "VBO", (unsigned)block->vbo, (unsigned)size);
 		if (indexBuffer) {
+            SCOPED_TIMER("idVertexCache::Alloc IBO");
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, block->vbo);
 			glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizei)size, data, GL_STATIC_DRAW);
 		} else {
+            SCOPED_TIMER("idVertexCache::Alloc VBO");
 			glBindBuffer(GL_ARRAY_BUFFER, block->vbo);
 
 			if (allocatingTempBuffer) {
 				glBufferData(GL_ARRAY_BUFFER, (GLsizei)size, data, GL_STREAM_DRAW);
 			} else {
-				glBufferData(GL_ARRAY_BUFFER, (GLsizei)size, data, GL_STATIC_DRAW);
+			    glBufferData(GL_ARRAY_BUFFER, (GLsizei)size, data, GL_STATIC_DRAW);
 			}
 		}
 	} else {
+        SCOPED_TIMER("idVertexCache::Alloc not VBO");
 		block->virtMem = Mem_Alloc(size);
 		SIMDProcessor->Memcpy(block->virtMem, data, size);
 	}

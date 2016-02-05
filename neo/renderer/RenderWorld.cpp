@@ -30,6 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "tr_local.h"
+#include "../sys/sys_prof.h"
 
 /*
 ===================
@@ -727,6 +728,7 @@ to handle mirrors,
 */
 void idRenderWorldLocal::RenderScene(const renderView_t *renderView)
 {
+    SCOPED_TIMER("idRenderWorldLocal::RenderScene");
 #ifndef	ID_DEDICATED
 	renderView_t	copy;
 
@@ -2282,7 +2284,7 @@ R_GlobalShaderOverride
 */
 bool R_GlobalShaderOverride(const idMaterial **shader)
 {
-
+    SCOPED_TIMER("R_GlobalShaderOverride");
 	if (!(*shader)->IsDrawn()) {
 		return false;
 	}
@@ -2307,10 +2309,10 @@ R_RemapShaderBySkin
 */
 const idMaterial *R_RemapShaderBySkin(const idMaterial *shader, const idDeclSkin *skin, const idMaterial *customShader)
 {
-
 	if (!shader) {
 		return NULL;
 	}
+    SCOPED_TIMER("R_RemapShaderBySkin");
 
 	// never remap surfaces that were originally nodraw, like collision hulls
 	if (!shader->IsDrawn()) {
