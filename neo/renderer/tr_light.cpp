@@ -30,6 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "tr_local.h"
+#include "../sys/sys_prof.h"
 
 static const float CHECK_BOUNDS_EPSILON = 1.0f;
 
@@ -51,6 +52,7 @@ Create it if needed
 */
 bool R_CreateAmbientCache(srfTriangles_t *tri, bool needsLighting)
 {
+    SCOPED_TIMER("R_CreateAmbientCache");
 	if (tri->ambientCache) {
 		return true;
 	}
@@ -1012,6 +1014,7 @@ it and any necessary overlays
 */
 idRenderModel *R_EntityDefDynamicModel(idRenderEntityLocal *def)
 {
+    SCOPED_TIMER("R_EntityDefDynamicModel");
 	bool callbackUpdate;
 
 	// allow deferred entities to construct themselves
@@ -1094,6 +1097,7 @@ R_AddDrawSurf
 void R_AddDrawSurf(const srfTriangles_t *tri, const viewEntity_t *space, const renderEntity_t *renderEntity,
                    const idMaterial *shader, const idScreenRect &scissor)
 {
+    SCOPED_TIMER("R_AddDrawSurf");
 	drawSurf_t		*drawSurf;
 	const float		*shaderParms;
 	static float	refRegs[MAX_EXPRESSION_REGISTERS];	// don't put on stack, or VC++ will do a page touch
@@ -1251,6 +1255,7 @@ each viewEntity that has a non-empty scissorRect
 */
 static void R_AddAmbientDrawsurfs(viewEntity_t *vEntity)
 {
+    SCOPED_TIMER("R_AddAmbientDrawsurfs");
 	int					i, total;
 	idRenderEntityLocal	*def;
 	srfTriangles_t		*tri;
@@ -1388,6 +1393,7 @@ two or more lights.
 */
 void R_AddModelSurfaces(void)
 {
+    SCOPED_TIMER("R_AddModelSurfaces");
 	viewEntity_t		*vEntity;
 	idInteraction		*inter, *next;
 	idRenderModel		*model;
@@ -1400,6 +1406,7 @@ void R_AddModelSurfaces(void)
 	// any light that intersects the view (for shadows)
 	for (vEntity = tr.viewDef->viewEntitys; vEntity; vEntity = vEntity->next) {
 
+        SCOPED_TIMER("R_AddModelSurfaces: for loop");
 		if (r_useEntityScissors.GetBool()) {
 			// calculate the screen area covered by the entity
 			idScreenRect scissorRect = R_CalcEntityScissorRectangle(vEntity);
@@ -1423,6 +1430,7 @@ void R_AddModelSurfaces(void)
 			tr.viewDef->floatTime = game->GetTimeGroupTime(vEntity->entityDef->parms.timeGroup) * 0.001;
 			tr.viewDef->renderView.time = game->GetTimeGroupTime(vEntity->entityDef->parms.timeGroup);
 		}
+        SCOPED_TIMER("R_AddModelSurfaces: for loop middle");
 
 		if (tr.viewDef->isXraySubview && vEntity->entityDef->parms.xrayIndex == 1) {
 			if (vEntity->entityDef->parms.timeGroup) {
