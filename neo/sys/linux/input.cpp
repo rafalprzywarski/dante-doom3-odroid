@@ -320,11 +320,15 @@ void Posix_PollInput()
             }
 
             case SDL_MOUSEMOTION: {
-                if (!in_dgamouse.GetBool())
-                    SDL_WarpMouse((glConfig.vidWidth/2),(glConfig.vidHeight/2));
+
+                if (event.motion.x == (glConfig.vidWidth/2) && event.motion.y == (glConfig.vidHeight/2))
+                    break;
+
+                SDL_WarpMouse((glConfig.vidWidth/2), (glConfig.vidHeight/2));
 
                 int dx = event.motion.xrel;
                 int dy = event.motion.yrel;
+
                 Posix_QueEvent(SE_MOUSE, dx, dy, 0, NULL);
                 Posix_AddMousePollEvent(M_DELTAX, dx);
                 Posix_AddMousePollEvent(M_DELTAY, dy);

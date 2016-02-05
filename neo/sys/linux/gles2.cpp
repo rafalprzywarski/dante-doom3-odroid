@@ -151,7 +151,10 @@ bool GLimp_OpenDisplay(void)
 		return false;
 	}
 
-    if (!SDL_SetVideoMode(32, 32, 0, 0)) {
+    uint32_t actualWidth, actualHeight;
+    graphics_get_display_size(0, &actualWidth, &actualHeight);
+
+    if (!SDL_SetVideoMode(actualWidth, actualHeight, 0, 0)) {
          common->Printf("SDL_SetVideoMode() failed (%s)\n", SDL_GetError());
          return false;
       }
