@@ -30,6 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "tr_local.h"
+#include "../sys/sys_prof.h"
 
 shaderProgram_t	interactionShader;
 shaderProgram_t	shadowShader;
@@ -63,6 +64,7 @@ RB_GLSL_DrawInteraction
 */
 void	RB_GLSL_DrawInteraction(const drawInteraction_t *din)
 {
+    SCOPED_TIMER("RB_GLSL_DrawInteraction");
 	static const float zero[4] = { 0, 0, 0, 0 };
 	static const float one[4] = { 1, 1, 1, 1 };
 	static const float negOne[4] = { -1, -1, -1, -1 };
@@ -123,7 +125,7 @@ void	RB_GLSL_DrawInteraction(const drawInteraction_t *din)
 			break;
 	}
 	GL_Uniform1fv(offsetof(shaderProgram_t, specularExponent), &f);
-	glUniform1f(glGetUniformLocation(shader->program, "u_brightness"), glConfig.valBrightness);
+	GL_Uniform1fv(offsetof(shaderProgram_t, brightness), &glConfig.valBrightness);
 
 	// set the textures
 
@@ -160,6 +162,7 @@ RB_GLSL_CreateDrawInteractions
 */
 void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf)
 {
+    SCOPED_TIMER("RB_GLSL_CreateDrawInteractions");
 	if (!surf) {
 		return;
 	}
@@ -243,6 +246,7 @@ RB_GLSL_DrawInteractions
 */
 void RB_GLSL_DrawInteractions(void)
 {
+    SCOPED_TIMER("RB_GLSL_DrawInteractions");
 	viewLight_t		*vLight;
 	const idMaterial	*lightShader;
 
@@ -478,6 +482,7 @@ static void RB_GLSL_GetUniformLocations(shaderProgram_t *shader)
 	shader->glColor = glGetUniformLocation(shader->program, "u_glColor");
 	shader->alphaTest = glGetUniformLocation(shader->program, "u_alphaTest");
 	shader->specularExponent = glGetUniformLocation(shader->program, "u_specularExponent");
+    shader->brightness = glGetUniformLocation(shader->program, "u_brightness");
 
 	shader->eyeOrigin = glGetUniformLocation(shader->program, "u_eyeOrigin");
 	shader->localEyeOrigin = glGetUniformLocation(shader->program, "u_localEyeOrigin");
