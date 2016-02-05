@@ -544,6 +544,7 @@ void R_InitOpenGL(void)
 	R_SetColorMappings();
 }
 
+idCVar r_checkGLErrors("r_checkGLErrors", "0", CVAR_BOOL|CVAR_SYSTEM|CVAR_NOCHEAT, "check GL errors");
 /*
 ==================
 GL_CheckErrors
@@ -551,6 +552,8 @@ GL_CheckErrors
 */
 void GL_CheckErrors(void)
 {
+    if (!r_checkGLErrors.GetBool())
+        return;
 	int		err;
 	char	s[64];
 	int		i;
